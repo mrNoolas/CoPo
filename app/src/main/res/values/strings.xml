@@ -1,0 +1,19 @@
+<!--
+  ~ Copyright (c) 2015. This was programmed by IC-Tea (@sirNoolas - David Vonk): Do not copy!
+  -->
+
+<resources>
+    <string name="app_name">TePa</string>
+    <string name="action_settings">Instellingen</string>
+    <string name="title_activity_display_entries">DisplayEntries</string>
+    <string name="name">Naam</string>
+    <string name="description">Beschrijving van de situatie</string>
+    <string name="learnedLesson">Wat heb ik hiervan geleerd?</string>
+    <string name="save">Opslaan</string>
+    <string name="cancel">Annuleren</string>
+    <string name="delete">Verwijderen</string>
+    <string name="edit">Aanpassen</string>
+    <string name="share">Delen</string>
+    <string name="group">Groep:</string>
+    <string name="title_activity_test">test</string>
+</resources>

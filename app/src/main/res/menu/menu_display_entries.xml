@@ -1,0 +1,20 @@
+<!--
+  ~ Copyright (c) 2015. This was programmed by IC-Tea (@sirNoolas - David Vonk): Do not copy!
+  -->
+
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.ic_tea.david.tepa.DisplayEntries">
+
+    <!-- TODO: change words to icons -->
+    <item
+        android:title="@string/delete"
+        android:id="@+id/delete_option"/>
+    <!--item
+        android:title="@string/edit"
+        android:id="@+id/edit_option"/-->
+    <item
+        android:title="@string/share"
+        android:id="@+id/share_option"/>
+</menu>

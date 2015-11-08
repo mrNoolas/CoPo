@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) 2015. This was programmed by IC-Tea (@sirNoolas - David Vonk): Do not copy!
+  -->
+
+<resources>
+    <!-- This array is decoded in DisplayEntries.class
+    If You change this list, change the class too!-->
+    <string-array name="competences">
+        <item>Alles</item>
+        <item>Doorzetten</item>
+        <item>Individueel Werken</item>
+        <item>Procesgerichtheid</item>
+        <item>Kennisgerichtheid</item>
+        <item>Samenwerken</item>
+        <item>Productgerichtheid</item>
+        <item>Inventiviteit</item>
+        <item>Plannen en Organiseren</item>
+    </string-array>
+</resources>
