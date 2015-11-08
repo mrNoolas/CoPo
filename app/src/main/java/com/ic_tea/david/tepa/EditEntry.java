@@ -19,10 +19,12 @@ import java.util.Date;
 public class EditEntry extends AppCompatActivity {
     Spinner spinner;
     EditText nameEditText, descriptionEditText, lessonLearnedEditText;
-    private final String TAG = EditEntry.class.getSimpleName();
-    EntriesDBHelper dbHelper;
+    int type;
 
+    EntriesDBHelper dbHelper;
     Entry workingEntry;
+
+    private final String TAG = EditEntry.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,14 +36,13 @@ public class EditEntry extends AppCompatActivity {
         descriptionEditText = (EditText) findViewById(R.id.description);
         lessonLearnedEditText = (EditText) findViewById(R.id.lesson_learned);
 
-        // TODO: get workingEntry from intent
         dbHelper = EntriesDBHelper.getInstance(this);
         int id = getIntent().getIntExtra(DisplayEntries.INTENT_ENTRY_ID_EXTRA, -1);
-        int type = getIntent().getIntExtra(DisplayEntries.INTENT_TYPE_EXTRA, 0);
+        type = getIntent().getIntExtra(DisplayEntries.INTENT_TYPE_EXTRA, 0);
 
+        spinner.setSelection(type);
         if (id != -1) {
             workingEntry = dbHelper.getSingleEntry(id);
-            spinner.setSelection(type);
             nameEditText.setText(workingEntry.getName());
             descriptionEditText.setText(workingEntry.getDescription());
             lessonLearnedEditText.setText(workingEntry.getLessonLearned());
