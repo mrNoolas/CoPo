@@ -3,12 +3,34 @@
   ~ Copyright (c) 2015. This was programmed by IC-Tea (@sirNoolas - David Vonk): Do not copy!
   -->
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:padding="4dp"
+        android:elevation="8dp"
+        android:gravity="center_horizontal"
+        android:id="@+id/select_category"
+        android:text="Selecteer een competentie om de bijbehorende portfolio-verslagen weer te geven"/>
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="8dp"
+        android:padding="4dp"
+        android:id="@+id/share_all_button"
+        android:textSize="16sp"
+        android:text="Alle verslagen delen"
+        android:onClick="shareAll" />
     <ListView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_below="@id/select_category"
+        android:layout_above="@id/share_all_button"
         android:id="@+id/main_list_view"/>
 
-</LinearLayout>
+
+</RelativeLayout>

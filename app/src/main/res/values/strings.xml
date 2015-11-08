@@ -16,4 +16,5 @@
     <string name="share">Delen</string>
     <string name="group">Groep:</string>
     <string name="title_activity_test">test</string>
+    <string name="confirm_save_toast">Het verslag is opgeslagen :)</string>
 </resources>

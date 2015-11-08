@@ -7,7 +7,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.ic_tea.david.tepa.DisplayEntries">
 
-    <!-- TODO: change words to icons -->
     <item
         android:title="@string/delete"
         android:id="@+id/delete_option"/>

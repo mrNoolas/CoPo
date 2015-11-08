@@ -68,12 +68,13 @@ public class EditEntry extends AppCompatActivity {
             workingEntry = new Entry(workingEntry.getId(), type, name, dateStr, description, lessonLearned);
         }
 
-
         dbHelper.addOrUpdateEntry(workingEntry);
+        setResult(RESULT_OK);
         finish();
     }
 
     public void cancel(View view) {
+        setResult(RESULT_CANCELED);
         finish();
     }
 }

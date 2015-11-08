@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.ActionMode;
 import android.view.Menu;
@@ -17,6 +16,8 @@ import android.view.View;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -27,6 +28,7 @@ public class DisplayEntries extends AppCompatActivity {
     private int type;
     ArrayList<Entry> entries;
     ListView listView;
+    TextView instructions;
     EntriesDBHelper dbHelper;
     String typeStr;
     private final String TAG = DisplayEntries.class.getSimpleName();
@@ -48,6 +50,7 @@ public class DisplayEntries extends AppCompatActivity {
         //setSupportActionBar(toolbar);
 
         dbHelper = EntriesDBHelper.getInstance(this); // this may be laggy
+        instructions = (TextView) findViewById(R.id.instructions);
         refreshListView();
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -61,7 +64,12 @@ public class DisplayEntries extends AppCompatActivity {
     }
 
     private void refreshListView() {
-        entries = dbHelper.getMultipleEntries(typeStr);Log.i(TAG, "here");
+        entries = dbHelper.getMultipleEntries(typeStr);
+        if (entries.size() > 0) {
+            instructions.setVisibility(View.GONE);
+        } else {
+            instructions.setVisibility(View.VISIBLE);
+        }
         setupListView(getInfo(entries));
     }
 
@@ -81,8 +89,11 @@ public class DisplayEntries extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == INTENT_REQUEST_EDIT) {
+        if (requestCode == INTENT_REQUEST_EDIT && resultCode != RESULT_CANCELED) {
             refreshListView();
+            String message = getString(R.string.confirm_save_toast);
+            Toast toast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
+            toast.show();
         }
     }
 
@@ -210,18 +221,17 @@ public class DisplayEntries extends AppCompatActivity {
         }
     }
 
-    private ArrayList<String> getInfo(ArrayList<Entry> entries) {
+    public static ArrayList<String> getInfo(ArrayList<Entry> entries) {
         ArrayList<String> info = new ArrayList<String>();
 
         for (Entry entry : entries) {
             String name = entry.getName();
 
-            // Format date from 'YYYYMMDDHHMM' to 'DD-MM-YYYY HH:MM'
+            // Format date from 'YYYYMMDDHHMM' to 'DD-MM-YYYY'
             String date = entry.getDateOfLastEdit(); // YYYYMMDDHHMM
-            date = date.substring(6, 8) + "-" + date.substring(4, 6) + "-" + date.substring(0, 4) +
-                    " " + date.substring(8, 10) + ":" + date.substring(10);
+            date = date.substring(6, 8) + "-" + date.substring(4, 6) + "-" + date.substring(0, 4);
 
-            info.add(entry.getId() + " " + name + "  |  " + date);
+            info.add(name + "  |  " + date);
         }
         return info;
     }
