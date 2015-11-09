@@ -19,15 +19,15 @@ public class EntriesDBHelper extends SQLiteOpenHelper{
 
     // Database info
     private static final String DATABASE_NAME = "entryDatabase";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     // table names
-    private static final String TABLE_ENTRIES = "entries";
+    private static final String TABLE_ARTICLES = "articles";
 
     // entries table columns
     private static final String KEY_ENTRY_ID = "id";
     private static final String KEY_TYPE = "type";
-    private static final String KEY_NAME = "name";
+    private static final String KEY_TITLE = "title";
     private static final String KEY_DATE_OF_LAST_EDIT = "dole";
     private static final String KEY_DESCRIPTION = "description";
     private static final String KEY_LESSON_LEARNED = "lessonLearned";
@@ -55,11 +55,11 @@ public class EntriesDBHelper extends SQLiteOpenHelper{
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String CREATE_ENTRIES_TABLE = "CREATE TABLE " + TABLE_ENTRIES +
+        String CREATE_ENTRIES_TABLE = "CREATE TABLE " + TABLE_ARTICLES +
                 "(" +
                     KEY_ENTRY_ID + " INTEGER PRIMARY KEY," + // Define a primary key
                     KEY_TYPE + " TEXT," +
-                    KEY_NAME + " TEXT," +
+                KEY_TITLE + " TEXT," +
                     KEY_DATE_OF_LAST_EDIT + " TEXT," + // DDMMYYYYHHMM
                     KEY_DESCRIPTION + " TEXT," +
                     KEY_LESSON_LEARNED + " TEXT" +
@@ -73,7 +73,7 @@ public class EntriesDBHelper extends SQLiteOpenHelper{
         // TODO: when the database is updated, update table instead of recreating it...
         if (oldVersion != newVersion) {
             // Simplest implementation is to drop all old tables and recreate them
-            db.execSQL("DROP TABLE IF EXISTS " + TABLE_ENTRIES);
+            db.execSQL("DROP TABLE IF EXISTS " + TABLE_ARTICLES);
             onCreate(db);
         }
     }
@@ -93,7 +93,7 @@ public class EntriesDBHelper extends SQLiteOpenHelper{
             int primaryKey = entry.getId();
             ContentValues values = new ContentValues();
             values.put(KEY_TYPE, entry.getType());
-            values.put(KEY_NAME, entry.getName());
+            values.put(KEY_TITLE, entry.getName());
             values.put(KEY_DATE_OF_LAST_EDIT, entry.getDateOfLastEdit());
             values.put(KEY_DESCRIPTION, entry.getDescription());
             values.put(KEY_LESSON_LEARNED, entry.getLessonLearned());
@@ -101,7 +101,7 @@ public class EntriesDBHelper extends SQLiteOpenHelper{
             // First try to update the entry
             int rows = 0;
             if (entry.getId() != -1) { // when the id is -1, it has been manually set.
-                rows = db.update(TABLE_ENTRIES, values,
+                rows = db.update(TABLE_ARTICLES, values,
                         KEY_ENTRY_ID + "= ?", new String[]{Integer.toString(primaryKey)});
             }
             if (rows == 1) {
@@ -109,7 +109,7 @@ public class EntriesDBHelper extends SQLiteOpenHelper{
                 return 1;
             } else {
                 // insert new entry
-                db.insertOrThrow(TABLE_ENTRIES, null, values);
+                db.insertOrThrow(TABLE_ARTICLES, null, values);
                 db.setTransactionSuccessful();
                 return 2;
             }
@@ -126,7 +126,7 @@ public class EntriesDBHelper extends SQLiteOpenHelper{
 
         db.beginTransaction();
         try {
-            db.delete(TABLE_ENTRIES, KEY_ENTRY_ID + "= ?",
+            db.delete(TABLE_ARTICLES, KEY_ENTRY_ID + "= ?",
                     new String[]{Integer.toString(entry.getId())});
             db.setTransactionSuccessful();
             return true;
@@ -140,7 +140,7 @@ public class EntriesDBHelper extends SQLiteOpenHelper{
 
     public Entry getSingleEntry(int key) {
         String ENTRY_SELECT_QUERY =
-                String.format("SELECT * FROM %s WHERE %s = '%s'", TABLE_ENTRIES, KEY_ENTRY_ID, key);
+                String.format("SELECT * FROM %s WHERE %s = '%s'", TABLE_ARTICLES, KEY_ENTRY_ID, key);
 
         SQLiteDatabase db = getReadableDatabase();
         Cursor cursor = db.rawQuery(ENTRY_SELECT_QUERY, null);
@@ -150,7 +150,7 @@ public class EntriesDBHelper extends SQLiteOpenHelper{
                 // This is not a efficient way of querrying (use predetermined index) but the db is small so, not huge deal...
                 int id = cursor.getInt(cursor.getColumnIndex(KEY_ENTRY_ID));
                 String type = cursor.getString(cursor.getColumnIndex(KEY_TYPE));
-                String name = cursor.getString(cursor.getColumnIndex(KEY_NAME));
+                String name = cursor.getString(cursor.getColumnIndex(KEY_TITLE));
                 String dateOfLastEdit = cursor.getString(cursor.getColumnIndex(KEY_DATE_OF_LAST_EDIT));
                 String description = cursor.getString(cursor.getColumnIndex(KEY_DESCRIPTION));
                 String lessonLearned = cursor.getString(cursor.getColumnIndex(KEY_LESSON_LEARNED));
@@ -175,10 +175,10 @@ public class EntriesDBHelper extends SQLiteOpenHelper{
         String ENTRY_SELECT_QUERY;
         if (type.equals("Alles")) {
             ENTRY_SELECT_QUERY =
-                    String.format("SELECT * FROM %s", TABLE_ENTRIES);
+                    String.format("SELECT * FROM %s", TABLE_ARTICLES);
         } else {
             ENTRY_SELECT_QUERY =
-                    String.format("SELECT * FROM %s WHERE %s = '%s'", TABLE_ENTRIES, KEY_TYPE, type);
+                    String.format("SELECT * FROM %s WHERE %s = '%s'", TABLE_ARTICLES, KEY_TYPE, type);
         }
         SQLiteDatabase db = getReadableDatabase();
         Cursor cursor = db.rawQuery(ENTRY_SELECT_QUERY, null);
@@ -186,7 +186,7 @@ public class EntriesDBHelper extends SQLiteOpenHelper{
             if (cursor.moveToFirst()) {
                 do {
                     int id = cursor.getInt(cursor.getColumnIndex(KEY_ENTRY_ID));
-                    String name = cursor.getString(cursor.getColumnIndex(KEY_NAME));
+                    String name = cursor.getString(cursor.getColumnIndex(KEY_TITLE));
                     String dateOfLastEdit = cursor.getString(cursor.getColumnIndex(KEY_DATE_OF_LAST_EDIT));
                     String description = cursor.getString(cursor.getColumnIndex(KEY_DESCRIPTION));
                     String lessonLearned = cursor.getString(cursor.getColumnIndex(KEY_LESSON_LEARNED));
