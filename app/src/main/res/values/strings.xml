@@ -6,7 +6,6 @@
     <string name="app_name">TePa</string>
     <string name="action_settings">Instellingen</string>
     <string name="title_activity_display_entries">DisplayEntries</string>
-    <string name="name">Naam</string>
     <string name="description">Beschrijving van de situatie</string>
     <string name="learnedLesson">Wat heb ik hiervan geleerd?</string>
     <string name="save">Opslaan</string>
@@ -17,4 +16,5 @@
     <string name="group">Groep:</string>
     <string name="title_activity_test">test</string>
     <string name="confirm_save_toast">Het verslag is opgeslagen :)</string>
+    <string name="title">Titel</string>
 </resources>
