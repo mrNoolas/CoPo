@@ -13,17 +13,42 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
+
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     public static final String INTENT_TYPE_EXTRA = "com.ic_tea.david.tepa.TYPE";
     String[] competences;
     ListView listView;
+    private InterstitialAd mInterstitialAd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        AdView mAdView = (AdView) findViewById(R.id.mainAdView);
+        AdRequest adRequest = new AdRequest.Builder()
+                .addTestDevice("2CE758D884DDB7F426A872EB9D469710")  // My huawei p7
+                .build();
+        mAdView.loadAd(adRequest);
+
+        //interstitial for share (preload)
+        mInterstitialAd = new InterstitialAd(this);
+        mInterstitialAd.setAdUnitId(getString(R.string.Interstitial_ad_unit_id));
+        mInterstitialAd.setAdListener(new AdListener() {
+            @Override
+            public void onAdClosed() {
+                requestNewInterstitial();
+                shareAll();
+            }
+        });
+
+        requestNewInterstitial();
 
         listView = (ListView) findViewById(R.id.main_list_view);
         // Set up categories in listView:
@@ -40,13 +65,16 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    protected void startCategory(int pos) {
-        Intent intent = new Intent(this, DisplayEntries.class);
-        intent.putExtra(INTENT_TYPE_EXTRA, pos);
-        startActivity(intent);
+    private void requestNewInterstitial() {
+        // This method returns a new Interstitial add to be preloaded
+        AdRequest adRequest = new AdRequest.Builder()
+                .addTestDevice("2CE758D884DDB7F426A872EB9D469710") // My huawei p7
+                .build();
+
+        mInterstitialAd.loadAd(adRequest);
     }
 
-    public void shareAll(View view) {
+    private void shareAll() {
         EntriesDBHelper dbHelper = EntriesDBHelper.getInstance(this);
         ArrayList<Entry> sharableEntries = dbHelper.getMultipleEntries("Alles");
 
@@ -56,5 +84,19 @@ public class MainActivity extends AppCompatActivity {
             Toast toast = Toast.makeText(this, noEntriesMessage, Toast.LENGTH_SHORT);
             toast.show();
         }
+    }
+
+    public void shareAllClick(View view) {
+        if (mInterstitialAd.isLoaded()) {
+            mInterstitialAd.show();
+        } else {
+            shareAll();
+        }
+    }
+
+    protected void startCategory(int pos) {
+        Intent intent = new Intent(this, DisplayEntries.class);
+        intent.putExtra(INTENT_TYPE_EXTRA, pos);
+        startActivity(intent);
     }
 }

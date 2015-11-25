@@ -17,4 +17,8 @@
     <string name="title_activity_test">test</string>
     <string name="confirm_save_toast">Het verslag is opgeslagen :)</string>
     <string name="title">Titel</string>
+    <string name="bottom_banner_ad_unit_id">ca-app-pub-3940256099942544/6300978111</string>
+    <!--TODO: change to: ca-app-pub-2522969731880484/9453990651 -->
+    <string name="Interstitial_ad_unit_id">ca-app-pub-3940256099942544/1033173712</string>
+    <!--TODO: change to: ca-app-pub-2522969731880484/6302047856-->
 </resources>

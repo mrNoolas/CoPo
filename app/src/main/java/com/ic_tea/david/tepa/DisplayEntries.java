@@ -19,6 +19,11 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
+
 import java.util.ArrayList;
 
 public class DisplayEntries extends AppCompatActivity {
@@ -31,6 +36,7 @@ public class DisplayEntries extends AppCompatActivity {
     TextView instructions;
     EntriesDBHelper dbHelper;
     String typeStr;
+    InterstitialAd mInterstitialAd;
     private int type;
 
     public static ArrayList<String> getInfo(ArrayList<Entry> entries) {
@@ -60,6 +66,21 @@ public class DisplayEntries extends AppCompatActivity {
         //Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         //setSupportActionBar(toolbar);
 
+        // Advertisements
+        // bottom banner
+        AdView mAdView = (AdView) findViewById(R.id.displayAdView);
+        AdRequest adRequest = new AdRequest.Builder()
+                .addTestDevice("2CE758D884DDB7F426A872EB9D469710")  // My huawei p7
+                .build();
+        mAdView.loadAd(adRequest);
+
+        //interstitial for share (preload)
+        mInterstitialAd = new InterstitialAd(this);
+        mInterstitialAd.setAdUnitId(getString(R.string.Interstitial_ad_unit_id));
+
+        requestNewInterstitial();
+
+
         dbHelper = EntriesDBHelper.getInstance(this); // this may be laggy
         instructions = (TextView) findViewById(R.id.instructions);
         refreshListView();
@@ -74,6 +95,15 @@ public class DisplayEntries extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
 
+    private void requestNewInterstitial() {
+        // This method returns a new Interstitial add to be preloaded
+        AdRequest adRequest = new AdRequest.Builder()
+                .addTestDevice("2CE758D884DDB7F426A872EB9D469710") // My huawei p7
+                .build();
+
+        mInterstitialAd.loadAd(adRequest);
+    }
+
     private void refreshListView() {
         entries = dbHelper.getMultipleEntries(typeStr);
         if (entries.size() > 0) {
@@ -84,8 +114,26 @@ public class DisplayEntries extends AppCompatActivity {
         setupListView(getInfo(entries));
     }
 
+    private void startInterstitialAdBeforeaddEntryActivity(final int id) {
+        // display ad, then share
+        mInterstitialAd.setAdListener(new AdListener() {
+            @Override
+            public void onAdClosed() {
+                requestNewInterstitial();
+                startAddEntryActivity(id);
+            }
+        });
+
+        if (mInterstitialAd.isLoaded()) {
+            mInterstitialAd.show();
+        } else {
+            startAddEntryActivity(id);
+        }
+    }
+
     private void startAddEntryActivity() {
-        startAddEntryActivity(-1);
+        startInterstitialAdBeforeaddEntryActivity(-1);
+        //startAddEntryActivity(-1);
     }
 
     private void startAddEntryActivity(int id) {
@@ -139,6 +187,7 @@ public class DisplayEntries extends AppCompatActivity {
             @Override
             public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
                 SparseBooleanArray selected;
+
                 switch (item.getItemId()) {
                     case R.id.delete_option:
                         // Calls getSelectedIds method from EntryListViewAdapter Class
@@ -174,7 +223,7 @@ public class DisplayEntries extends AppCompatActivity {
                                 sharableEntries.add(entries.get(selected.keyAt(i)));
                             }
                         }
-                        startShareIntent(sharableEntries);
+                        startInterstitialAdBeforeShare(sharableEntries);
                         mode.finish();
                         return true;
                     default:
@@ -198,8 +247,25 @@ public class DisplayEntries extends AppCompatActivity {
         });
     }
 
+    private void startInterstitialAdBeforeShare(final ArrayList<Entry> sharableEntries) {
+        // display ad, then share
+        mInterstitialAd.setAdListener(new AdListener() {
+            @Override
+            public void onAdClosed() {
+                requestNewInterstitial();
+                startShareIntent(sharableEntries);
+            }
+        });
+
+        if (mInterstitialAd.isLoaded()) {
+            mInterstitialAd.show();
+        } else {
+            startShareIntent(sharableEntries);
+        }
+    }
+
     private void startShareIntent(ArrayList<Entry> sharableEntries) {
-        // No sharable entries found
+        // if no sharable entries were found
         if (!Entry.share(this, sharableEntries)) {
             String noEntriesMessage = "Er zijn geen deelbare verslagen gevonden";
             Toast toast = Toast.makeText(this, noEntriesMessage, Toast.LENGTH_SHORT);

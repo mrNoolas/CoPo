@@ -4,33 +4,42 @@
   -->
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    xmlns:ads="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
     <TextView
+        android:id="@+id/select_category"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
-        android:padding="4dp"
         android:elevation="8dp"
         android:gravity="center_horizontal"
-        android:id="@+id/select_category"
+        android:padding="4dp"
         android:text="Selecteer een competentie om de bijbehorende portfolio-verslagen weer te geven"/>
-    <Button
-        android:layout_width="match_parent"
+
+    <com.google.android.gms.ads.AdView
+        android:id="@+id/mainAdView"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_margin="8dp"
-        android:padding="4dp"
+        android:layout_centerHorizontal="true"
+        ads:adSize="BANNER"
+        ads:adUnitId="@string/bottom_banner_ad_unit_id"></com.google.android.gms.ads.AdView>
+    <Button
         android:id="@+id/share_all_button"
-        android:textSize="16sp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/mainAdView"
+        android:layout_margin="8dp"
+        android:onClick="shareAllClick"
+        android:padding="4dp"
         android:text="Alle verslagen delen"
-        android:onClick="shareAll" />
+        android:textSize="16sp" />
     <ListView
+        android:id="@+id/main_list_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/select_category"
         android:layout_above="@id/share_all_button"
-        android:id="@+id/main_list_view"/>
-
-
+        android:layout_below="@id/select_category" />
 </RelativeLayout>
