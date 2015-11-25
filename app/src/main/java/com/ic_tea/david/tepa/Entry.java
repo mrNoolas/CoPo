@@ -4,7 +4,16 @@
 
 package com.ic_tea.david.tepa;
 
+import android.content.Context;
+import android.content.Intent;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+
 public class Entry {
+    private static final String TAG = Entry.class.getSimpleName();
     private final int id;
     private String type;
     private String name;
@@ -20,6 +29,51 @@ public class Entry {
         this.dateOfLastEdit = dateOfLastEdit;
         this.description = description;
         this.lessonLearned = lessonLearned;
+    }
+
+    /***
+     * * This function generates and executes a share intent.
+     * It will compose a message with info and content from sharableEntries.
+     *
+     * @param context         Context object
+     * @param sharableEntries Arraylist of all entry objects to be shared
+     */
+    public static boolean share(Context context, ArrayList<Entry> sharableEntries) {
+        if (sharableEntries.size() > 0) {
+            ArrayList<String> headers = DisplayEntries.getInfo(sharableEntries);
+
+            DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss:SSS");
+            Date date = new Date();
+            String dateStr = dateFormat.format(date);
+
+            String body = "Dit is een automatisch gegenereert bericht door de TePa " +
+                    "(Technasium Portfolio) app. Dit bericht bevat een selectie van portfolio-items," +
+                    "die zijn gedeeld via e-mail. Deze selectie is gegenereert op: " + dateStr;
+            for (int i = 0; i < sharableEntries.size(); i++) {
+                Entry entry = sharableEntries.get(i);
+                String typeStr = entry.getType();
+
+                body = body + "\n\n==================================================\n\n" +
+                        headers.get(i) + "\nCompetentie: " + typeStr
+                        + "\n\nOmschrijving van de situatie:\n\"" + entry.getDescription()
+                        + "\"\n\nWat heb ik hiervan geleerd:\n\"" + entry.getLessonLearned() + "\"";
+            }
+            body = body + "\n\n==================================================\n\n" +
+                    "Wanneer u vragen en/of opmerkingen heeft over dit bericht kunt u mailen" +
+                    " naar: noolasproductions@gmail.com. \n" +
+                    "De gebruiker die deze e-mail verstuurd heeft, is zelf verantwoordelijk voor de" +
+                    "inhoud van deze e-mail. De auteur van de app kan dus niet aansprakelijk worden" +
+                    "gesteld voor ongepaste (of andere gelijksoortige) inhoud.";
+
+            Intent sendIntent = new Intent();
+            sendIntent.setAction(Intent.ACTION_SEND);
+            sendIntent.putExtra(Intent.EXTRA_TEXT, body);
+            sendIntent.setType("text/plain");
+            context.startActivity(sendIntent);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public int getId() {

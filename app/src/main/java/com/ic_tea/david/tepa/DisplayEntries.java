@@ -19,23 +19,34 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 
 public class DisplayEntries extends AppCompatActivity {
-    private int type;
+    public static final String INTENT_TYPE_EXTRA = "com.ic_tea.david.tepa.TYPEFOREDIT";
+    public static final String INTENT_ENTRY_ID_EXTRA = "com.ic_tea.david.tepa.ENTRY";
+    public static final int INTENT_REQUEST_EDIT = 1;
+    private final String TAG = DisplayEntries.class.getSimpleName();
     ArrayList<Entry> entries;
     ListView listView;
     TextView instructions;
     EntriesDBHelper dbHelper;
     String typeStr;
-    private final String TAG = DisplayEntries.class.getSimpleName();
+    private int type;
 
-    public static final String INTENT_TYPE_EXTRA = "com.ic_tea.david.tepa.TYPEFOREDIT";
-    public static final String INTENT_ENTRY_ID_EXTRA = "com.ic_tea.david.tepa.ENTRY";
-    public static final int INTENT_REQUEST_EDIT = 1;
+    public static ArrayList<String> getInfo(ArrayList<Entry> entries) {
+        ArrayList<String> info = new ArrayList<>();
+
+        for (Entry entry : entries) {
+            String name = entry.getName();
+
+            // Format date from 'YYYYMMDDHHMM' to 'DD-MM-YYYY'
+            String date = entry.getDateOfLastEdit(); // YYYYMMDDHHMM
+            date = date.substring(6, 8) + "-" + date.substring(4, 6) + "-" + date.substring(0, 4);
+
+            info.add(name + "  |  " + date);
+        }
+        return info;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,7 +94,6 @@ public class DisplayEntries extends AppCompatActivity {
         intent.putExtra(INTENT_ENTRY_ID_EXTRA, id);
         startActivityForResult(intent, INTENT_REQUEST_EDIT);
     }
-
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -158,7 +168,7 @@ public class DisplayEntries extends AppCompatActivity {
                         selected = entryAdapter.getSelectedIds();
 
                         // isolate the selected entries
-                        ArrayList<Entry> sharableEntries = new ArrayList<Entry>();
+                        ArrayList<Entry> sharableEntries = new ArrayList<>();
                         for (int i = (selected.size() - 1); i >= 0; i--) {
                             if (selected.valueAt(i)) {
                                 sharableEntries.add(entries.get(selected.keyAt(i)));
@@ -189,51 +199,12 @@ public class DisplayEntries extends AppCompatActivity {
     }
 
     private void startShareIntent(ArrayList<Entry> sharableEntries) {
-        if (sharableEntries.size() > 0) {
-            ArrayList<String> headers = getInfo(sharableEntries);
-
-            DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss:SSS");
-            Date date = new Date();
-            String dateStr = dateFormat.format(date);
-
-            String body = "Dit is een automatisch gegenereert bericht door de TePa " +
-                    "(Technasium Portfolio) app. Dit bericht bevat een selectie van portfolio-items," +
-                    "die zijn gedeeld via e-mail. Deze selectie is gegenereert op: " + dateStr;
-            for (int i = 0; i < sharableEntries.size(); i++) {
-                Entry entry = sharableEntries.get(i);
-                body = body + "\n\n==================================================\n\n" +
-                        headers.get(i) + "\n\nOmschrijving van de situatie:\n\"" +
-                        entry.getDescription() + "\"\n\nWat heb ik hiervan geleerd:\n\"" +
-                        entry.getLessonLearned() + "\"";
-            }
-            body = body + "\n\n==================================================\n\n" +
-                    "Wanneer u vragen en/of opmerkingen heeft over dit bericht kunt u mailen" +
-                    " naar: noolasproductions@gmail.com. \n" +
-                    "De gebruiker die deze e-mail verstuurd heeft, is zelf verantwoordelijk voor de" +
-                    "inhoud van deze e-mail. De auteur van de app kan dus niet aansprakelijk worden" +
-                    "gesteld voor ongepaste (of andere gelijksoortige) inhoud.";
-
-            Intent sendIntent = new Intent();
-            sendIntent.setAction(Intent.ACTION_SEND);
-            sendIntent.putExtra(Intent.EXTRA_TEXT, body);
-            sendIntent.setType("text/plain");
-            startActivity(sendIntent);
+        // No sharable entries found
+        if (!Entry.share(this, sharableEntries)) {
+            String noEntriesMessage = "Er zijn geen deelbare verslagen gevonden";
+            Toast toast = Toast.makeText(this, noEntriesMessage, Toast.LENGTH_SHORT);
+            toast.show();
         }
-    }
-
-    public static ArrayList<String> getInfo(ArrayList<Entry> entries) {
-        ArrayList<String> info = new ArrayList<String>();
-
-        for (Entry entry : entries) {
-            String name = entry.getName();
-
-            // Format date from 'YYYYMMDDHHMM' to 'DD-MM-YYYY'
-            String date = entry.getDateOfLastEdit(); // YYYYMMDDHHMM
-            date = date.substring(6, 8) + "-" + date.substring(4, 6) + "-" + date.substring(0, 4);
-
-            info.add(name + "  |  " + date);
-        }
-        return info;
     }
 
 }

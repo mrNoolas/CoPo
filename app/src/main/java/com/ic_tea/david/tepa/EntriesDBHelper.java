@@ -15,15 +15,11 @@ import java.util.ArrayList;
 
 public class EntriesDBHelper extends SQLiteOpenHelper{
     private static final String TAG = EntriesDBHelper.class.getSimpleName();
-    private static EntriesDBHelper instance;
-
     // Database info
     private static final String DATABASE_NAME = "entryDatabase";
     private static final int DATABASE_VERSION = 2;
-
     // table names
     private static final String TABLE_ARTICLES = "articles";
-
     // entries table columns
     private static final String KEY_ENTRY_ID = "id";
     private static final String KEY_TYPE = "type";
@@ -31,6 +27,11 @@ public class EntriesDBHelper extends SQLiteOpenHelper{
     private static final String KEY_DATE_OF_LAST_EDIT = "dole";
     private static final String KEY_DESCRIPTION = "description";
     private static final String KEY_LESSON_LEARNED = "lessonLearned";
+    private static EntriesDBHelper instance;
+
+    private EntriesDBHelper(Context context) {
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+    }
 
     public static synchronized EntriesDBHelper getInstance(Context context) {
          // Use the application context, which will ensure that you
@@ -40,10 +41,6 @@ public class EntriesDBHelper extends SQLiteOpenHelper{
           instance = new EntriesDBHelper(context.getApplicationContext());
         }
         return instance;
-    }
-
-    private EntriesDBHelper (Context context) {
-        super (context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     @Override
@@ -170,7 +167,7 @@ public class EntriesDBHelper extends SQLiteOpenHelper{
     }
 
     public ArrayList<Entry> getMultipleEntries(String type) {
-        ArrayList<Entry> entries = new ArrayList<Entry>();
+        ArrayList<Entry> entries = new ArrayList<>();
 
         String ENTRY_SELECT_QUERY;
         if (type.equals("Alles")) {
@@ -187,12 +184,14 @@ public class EntriesDBHelper extends SQLiteOpenHelper{
                 do {
                     int id = cursor.getInt(cursor.getColumnIndex(KEY_ENTRY_ID));
                     String name = cursor.getString(cursor.getColumnIndex(KEY_TITLE));
+                    String personalType = cursor.getString(cursor.getColumnIndex(KEY_TYPE));
                     String dateOfLastEdit = cursor.getString(cursor.getColumnIndex(KEY_DATE_OF_LAST_EDIT));
                     String description = cursor.getString(cursor.getColumnIndex(KEY_DESCRIPTION));
                     String lessonLearned = cursor.getString(cursor.getColumnIndex(KEY_LESSON_LEARNED));
 
                     entries.add(
-                            new Entry(id, type, name, dateOfLastEdit, description, lessonLearned));
+                            new Entry(id, personalType, name,
+                                    dateOfLastEdit, description, lessonLearned));
                 } while (cursor.moveToNext());
             }
         } catch (Exception e) {
