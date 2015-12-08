@@ -114,7 +114,7 @@ public class DisplayEntries extends AppCompatActivity {
         setupListView(getInfo(entries));
     }
 
-    private void startInterstitialAdBeforeaddEntryActivity(final int id) {
+    private void startInterstitialAdBeforeAddEntryActivity(final int id) {
         // display ad, then share
         mInterstitialAd.setAdListener(new AdListener() {
             @Override
@@ -132,7 +132,7 @@ public class DisplayEntries extends AppCompatActivity {
     }
 
     private void startAddEntryActivity() {
-        startInterstitialAdBeforeaddEntryActivity(-1);
+        startInterstitialAdBeforeAddEntryActivity(-1);
         //startAddEntryActivity(-1);
     }
 

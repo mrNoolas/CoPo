@@ -44,6 +44,10 @@ public class EditEntry extends AppCompatActivity {
             nameEditText.setText(workingEntry.getName());
             descriptionEditText.setText(workingEntry.getDescription());
             lessonLearnedEditText.setText(workingEntry.getLessonLearned());
+        } else {
+            // Get category from calling class
+            type = getIntent().getIntExtra(DisplayEntries.INTENT_TYPE_EXTRA, 0);
+            // There is no new workingentry here because it is instantiated on save if none is present.
         }
         spinner.setSelection(type);
     }
