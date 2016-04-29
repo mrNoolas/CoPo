@@ -4,8 +4,8 @@
   -->
 
 <resources>
-    <color name="colorPrimary">#26A69A</color>
-    <color name="colorPrimaryDark">#00695C</color>
-    <color name="colorAccent">#1DE9B6</color>
+    <color name="colorPrimary">#8BC34A</color>
+    <color name="colorPrimaryDark">#33691E</color>
+    <color name="colorAccent">#64DD17</color>
     <color name="bg_hint_text">#757575</color>
 </resources>

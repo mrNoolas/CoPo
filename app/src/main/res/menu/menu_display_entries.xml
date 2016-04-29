@@ -5,7 +5,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.ic_tea.david.tepa.DisplayEntries">
+    tools:context="com.ic_tea.david.copo.DisplayEntries">
 
     <item
         android:title="@string/delete"

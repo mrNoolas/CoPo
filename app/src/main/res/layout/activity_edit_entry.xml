@@ -11,14 +11,14 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="com.ic_tea.david.tepa.EditEntry">
+    tools:context="com.ic_tea.david.copo.EditEntry">
 
     <LinearLayout
         android:id="@+id/spinner_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="4dp"
-        android:background="#80CBC4"
+        android:background="@color/colorPrimary"
         android:elevation="6dp"
         android:orientation="horizontal"
         android:padding="4dp">

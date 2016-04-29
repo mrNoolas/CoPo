@@ -15,14 +15,14 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         ads:adSize="BANNER"
-        ads:adUnitId="@string/bottom_banner_ad_unit_id"></com.google.android.gms.ads.AdView>
+        ads:adUnitId="@string/bottom_banner_ad_unit_id"/>
 
     <android.support.design.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@id/displayAdView"
         android:fitsSystemWindows="true"
-        tools:context="com.ic_tea.david.tepa.DisplayEntries">
+        tools:context="com.ic_tea.david.copo.DisplayEntries">
 
         <!--android.support.design.widget.AppBarLayout android:layout_height="wrap_content"
             android:layout_width="match_parent" android:theme="@style/AppTheme.AppBarOverlay">

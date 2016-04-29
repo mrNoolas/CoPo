@@ -7,14 +7,14 @@
     <!-- This array is decoded in DisplayEntries.class
     If You change this list, change the class too!-->
     <string-array name="competences">
-        <item>Alles</item>
-        <item>Doorzetten</item>
-        <item>Individueel Werken</item>
-        <item>Procesgerichtheid</item>
-        <item>Kennisgerichtheid</item>
-        <item>Samenwerken</item>
-        <item>Productgerichtheid</item>
-        <item>Inventiviteit</item>
-        <item>Plannen en Organiseren</item>
+        <item>@string/all</item>
+        <item>@string/perseverance</item>
+        <item>@string/working_alone</item>
+        <item>@string/process_orientation</item>
+        <item>@string/knowledge_orientation</item>
+        <item>@string/collaboration</item>
+        <item>@string/product_orientation</item>
+        <item>@string/inventivity</item>
+        <item>@string/planning_and_organisation</item>
     </string-array>
 </resources>

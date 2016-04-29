@@ -1,7 +1,3 @@
 <component name="CopyrightManager">
-  <settings default="IC-Tea -- David">
-    <module2copyright>
-      <element module="All" copyright="IC-Tea -- David" />
-    </module2copyright>
-  </settings>
+  <settings default="" />
 </component>
