@@ -13,32 +13,58 @@ import android.util.Log;
 
 import java.util.ArrayList;
 
-public class EntriesDBHelper extends SQLiteOpenHelper{
-    private static final String TAG = EntriesDBHelper.class.getSimpleName();
+public class DBHelper extends SQLiteOpenHelper{
+    private static final String TAG = DBHelper.class.getSimpleName();
     // Database info
-    private static final String DATABASE_NAME = "entryDatabase";
-    private static final int DATABASE_VERSION = 3;
-    // table names
-    private static final String TABLE_ARTICLES = "articles";
-    // entries table columns
-    private static final String KEY_ENTRY_ID = "id";
-    private static final String KEY_TYPE = "type";
-    private static final String KEY_TITLE = "title";
-    private static final String KEY_DATE_OF_LAST_EDIT = "dole";
-    private static final String KEY_DESCRIPTION = "description";
-    private static final String KEY_LESSON_LEARNED = "lessonLearned";
-    private static EntriesDBHelper instance;
+    private static final String DATABASE_NAME = "Database";
+    private static final int DATABASE_VERSION = 4;
 
-    private EntriesDBHelper(Context context) {
+    // table names
+    private static final String TABLE_PROJECTS = "projects";
+    private static final String TABLE_CATEGORIES = "categories";
+    private static final String TABLE_LOGS = "articles";
+    private static final String TABLE_PORTFOLIOS = "portfolios";
+    private static final String TABLE_GOALS = "goals";
+
+    // projects columns
+    private static final String KEY_PROJECT_ID = "id";
+    private static final String KEY_PROJECT_TITLE = "title";
+    private static final String KEY_PROJECT_DESCR = "description";
+
+    // ADD: columns for table categories
+
+    // logs table columns
+    private static final String KEY_LOG_ID = "id";
+    private static final String KEY_LOG_PROJECT_ID = "projectid"; // The project the log belongs to
+    private static final String KEY_LOG_TITLE = "title";
+    private static final String KEY_LOG_DATE = "date";
+    private static final String KEY_LOG_DESCR = "description";
+    private static final String KEY_LOG_ACHIEVEMENTS = "achievements";
+
+    // portfolios columns
+    private static final String KEY_PORTFOLIO_ID = "id";
+    private static final String KEY_PORTFOLIO_PROJECT_ID = "projectid"; // The project the log belongs to
+    private static final String KEY_PORTFOLIO_CATEGORY_ID = "categoryid";
+    private static final String KEY_PORTFOLIO_TITLE = "title";
+    private static final String KEY_PORTFOLIO_DATE = "date";
+    private static final String KEY_PORTFOLIO_DESCR = "description";
+    private static final String KEY_PORTFOLIO_ACHIEVEMENTS = "achievements";
+    private static final String KEY_PORTFOLIO_LESSON_LEARNED = "lessonLearned";
+    private static final String KEY_PORTFOLIO_NEXT_TIME = "whattododifferentlynexttime";
+
+
+    private static DBHelper instance;
+
+    private DBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
-    public static synchronized EntriesDBHelper getInstance(Context context) {
+    public static synchronized DBHelper getInstance(Context context) {
          // Use the application context, which will ensure that you
         // don't accidentally leak an Activity's context.
         // See this article for more information: http://bit.ly/6LRzfx
         if (instance == null) {
-          instance = new EntriesDBHelper(context.getApplicationContext());
+          instance = new DBHelper(context.getApplicationContext());
         }
         return instance;
     }
@@ -52,14 +78,15 @@ public class EntriesDBHelper extends SQLiteOpenHelper{
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String CREATE_ENTRIES_TABLE = "CREATE TABLE " + TABLE_ARTICLES +
+        // ADD: all tables to database
+        String CREATE_ENTRIES_TABLE = "CREATE TABLE " + TABLE_LOGS +
                 "(" +
-                    KEY_ENTRY_ID + " INTEGER PRIMARY KEY," + // Define a primary key
-                    KEY_TYPE + " INTEGER," +
-                    KEY_TITLE + " TEXT," +
-                    KEY_DATE_OF_LAST_EDIT + " TEXT," + // DDMMYYYYHHMM
-                    KEY_DESCRIPTION + " TEXT," +
-                    KEY_LESSON_LEARNED + " TEXT" +
+                KEY_LOG_ID + " INTEGER PRIMARY KEY," + // Define a primary key
+                KEY_LOG_PROJECT_ID + " INTEGER," +
+                KEY_LOG_TITLE + " TEXT," +
+                KEY_LOG_DATE + " TEXT," + // DDMMYYYYHHMM
+                KEY_LOG_DESCR + " TEXT," +
+                KEY_LOG_ACHIEVEMENTS + " TEXT" +
                 ")";
 
         db.execSQL(CREATE_ENTRIES_TABLE);
@@ -70,7 +97,7 @@ public class EntriesDBHelper extends SQLiteOpenHelper{
         // TODO: when the database is updated, update table instead of recreating it...
         if (oldVersion != newVersion) {
             // Simplest implementation is to drop all old tables and recreate them
-            db.execSQL("DROP TABLE IF EXISTS " + TABLE_ARTICLES);
+            db.execSQL("DROP TABLE IF EXISTS " + TABLE_LOGS);
             onCreate(db);
         }
     }
@@ -89,24 +116,24 @@ public class EntriesDBHelper extends SQLiteOpenHelper{
         try {
             int primaryKey = entry.getId();
             ContentValues values = new ContentValues();
-            values.put(KEY_TYPE, entry.getType());
-            values.put(KEY_TITLE, entry.getName());
-            values.put(KEY_DATE_OF_LAST_EDIT, entry.getDateOfLastEdit());
-            values.put(KEY_DESCRIPTION, entry.getDescription());
-            values.put(KEY_LESSON_LEARNED, entry.getLessonLearned());
+            values.put(KEY_LOG_PROJECT_ID, entry.getType());
+            values.put(KEY_LOG_TITLE, entry.getName());
+            values.put(KEY_LOG_DATE, entry.getDateOfLastEdit());
+            values.put(KEY_LOG_DESCR, entry.getDescription());
+            values.put(KEY_LOG_ACHIEVEMENTS, entry.getLessonLearned());
 
             // First try to update the entry
             int rows = 0;
             if (entry.getId() != -1) { // when the id is -1, it has been manually set.
-                rows = db.update(TABLE_ARTICLES, values,
-                        KEY_ENTRY_ID + "= ?", new String[]{Integer.toString(primaryKey)});
+                rows = db.update(TABLE_LOGS, values,
+                        KEY_LOG_ID + "= ?", new String[]{Integer.toString(primaryKey)});
             }
             if (rows == 1) {
                 db.setTransactionSuccessful();
                 return 1;
             } else {
                 // insert new entry
-                db.insertOrThrow(TABLE_ARTICLES, null, values);
+                db.insertOrThrow(TABLE_LOGS, null, values);
                 db.setTransactionSuccessful();
                 return 2;
             }
@@ -123,7 +150,7 @@ public class EntriesDBHelper extends SQLiteOpenHelper{
 
         db.beginTransaction();
         try {
-            db.delete(TABLE_ARTICLES, KEY_ENTRY_ID + "= ?",
+            db.delete(TABLE_LOGS, KEY_LOG_ID + "= ?",
                     new String[]{Integer.toString(entry.getId())});
             db.setTransactionSuccessful();
             return true;
@@ -137,7 +164,7 @@ public class EntriesDBHelper extends SQLiteOpenHelper{
 
     public Entry getSingleEntry(int key) {
         String ENTRY_SELECT_QUERY =
-                String.format("SELECT * FROM %s WHERE %s = '%s'", TABLE_ARTICLES, KEY_ENTRY_ID, key);
+                String.format("SELECT * FROM %s WHERE %s = '%s'", TABLE_LOGS, KEY_LOG_ID, key);
 
         SQLiteDatabase db = getReadableDatabase();
         Cursor cursor = db.rawQuery(ENTRY_SELECT_QUERY, null);
@@ -145,12 +172,12 @@ public class EntriesDBHelper extends SQLiteOpenHelper{
         try {
             if (cursor.moveToFirst()) {
                 // This is not a efficient way of querrying (use predetermined index) but the db is small so, not huge deal...
-                int id = cursor.getInt(cursor.getColumnIndex(KEY_ENTRY_ID));
-                int type = cursor.getInt(cursor.getColumnIndex(KEY_TYPE));
-                String name = cursor.getString(cursor.getColumnIndex(KEY_TITLE));
-                String dateOfLastEdit = cursor.getString(cursor.getColumnIndex(KEY_DATE_OF_LAST_EDIT));
-                String description = cursor.getString(cursor.getColumnIndex(KEY_DESCRIPTION));
-                String lessonLearned = cursor.getString(cursor.getColumnIndex(KEY_LESSON_LEARNED));
+                int id = cursor.getInt(cursor.getColumnIndex(KEY_LOG_ID));
+                int type = cursor.getInt(cursor.getColumnIndex(KEY_LOG_PROJECT_ID));
+                String name = cursor.getString(cursor.getColumnIndex(KEY_LOG_TITLE));
+                String dateOfLastEdit = cursor.getString(cursor.getColumnIndex(KEY_LOG_DATE));
+                String description = cursor.getString(cursor.getColumnIndex(KEY_LOG_DESCR));
+                String lessonLearned = cursor.getString(cursor.getColumnIndex(KEY_LOG_ACHIEVEMENTS));
 
                 return new Entry(id, type, name, dateOfLastEdit, description, lessonLearned);
             } else {
@@ -172,22 +199,22 @@ public class EntriesDBHelper extends SQLiteOpenHelper{
         String ENTRY_SELECT_QUERY;
         if (type == 0) {
             ENTRY_SELECT_QUERY =
-                    String.format("SELECT * FROM %s", TABLE_ARTICLES);
+                    String.format("SELECT * FROM %s", TABLE_LOGS);
         } else {
             ENTRY_SELECT_QUERY =
-                    String.format("SELECT * FROM %s WHERE %s = '%s'", TABLE_ARTICLES, KEY_TYPE, type);
+                    String.format("SELECT * FROM %s WHERE %s = '%s'", TABLE_LOGS, KEY_LOG_PROJECT_ID, type);
         }
         SQLiteDatabase db = getReadableDatabase();
         Cursor cursor = db.rawQuery(ENTRY_SELECT_QUERY, null);
         try {
             if (cursor.moveToFirst()) {
                 do {
-                    int id = cursor.getInt(cursor.getColumnIndex(KEY_ENTRY_ID));
-                    String name = cursor.getString(cursor.getColumnIndex(KEY_TITLE));
-                    int personalType = cursor.getInt(cursor.getColumnIndex(KEY_TYPE));
-                    String dateOfLastEdit = cursor.getString(cursor.getColumnIndex(KEY_DATE_OF_LAST_EDIT));
-                    String description = cursor.getString(cursor.getColumnIndex(KEY_DESCRIPTION));
-                    String lessonLearned = cursor.getString(cursor.getColumnIndex(KEY_LESSON_LEARNED));
+                    int id = cursor.getInt(cursor.getColumnIndex(KEY_LOG_ID));
+                    String name = cursor.getString(cursor.getColumnIndex(KEY_LOG_TITLE));
+                    int personalType = cursor.getInt(cursor.getColumnIndex(KEY_LOG_PROJECT_ID));
+                    String dateOfLastEdit = cursor.getString(cursor.getColumnIndex(KEY_LOG_DATE));
+                    String description = cursor.getString(cursor.getColumnIndex(KEY_LOG_DESCR));
+                    String lessonLearned = cursor.getString(cursor.getColumnIndex(KEY_LOG_ACHIEVEMENTS));
 
                     entries.add(
                             new Entry(id, personalType, name,

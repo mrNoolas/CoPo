@@ -12,8 +12,6 @@ import android.widget.Spinner;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 
 public class EditEntry extends AppCompatActivity {
@@ -21,7 +19,7 @@ public class EditEntry extends AppCompatActivity {
     Spinner spinner;
     EditText nameEditText, descriptionEditText, lessonLearnedEditText;
     int type = 0;
-    EntriesDBHelper dbHelper;
+    DBHelper dbHelper;
     Entry workingEntry;
 
     @Override
@@ -34,7 +32,7 @@ public class EditEntry extends AppCompatActivity {
         descriptionEditText = (EditText) findViewById(R.id.description);
         lessonLearnedEditText = (EditText) findViewById(R.id.lesson_learned);
 
-        dbHelper = EntriesDBHelper.getInstance(this);
+        dbHelper = DBHelper.getInstance(this);
         int id = getIntent().getIntExtra(DisplayEntries.INTENT_ENTRY_ID_EXTRA, -1);
 
         if (id != -1) {

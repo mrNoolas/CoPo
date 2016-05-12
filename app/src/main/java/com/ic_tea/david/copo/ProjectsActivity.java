@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2015. This was programmed by IC-Tea (@sirNoolas - David Vonk): Do not copy!
- */
-
 package com.ic_tea.david.copo;
 
 import android.content.Intent;
@@ -13,24 +9,27 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
-
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
+public class ProjectsActivity extends AppCompatActivity {
     public static final String INTENT_TYPE_EXTRA = "com.ic_tea.david.copo.TYPE";
-    String[] competences;
+    String[] projects;
     ListView listView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_projects);
 
+        occupyListView();
+    }
+
+    private void occupyListView() {
         listView = (ListView) findViewById(R.id.am_main_list_view);
         // Set up categories in listView:
-        competences = getResources().getStringArray(R.array.competences);
+        projects = getResources().getStringArray(R.array.competences);
         ArrayAdapter<String> competenceAdapter =
-                new ArrayAdapter<>(this, R.layout.category_item, competences);
+                new ArrayAdapter<>(this, R.layout.category_item, projects);
 
         listView.setAdapter(competenceAdapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -58,4 +57,5 @@ public class MainActivity extends AppCompatActivity {
         intent.putExtra(INTENT_TYPE_EXTRA, pos);
         startActivity(intent);
     }
+
 }

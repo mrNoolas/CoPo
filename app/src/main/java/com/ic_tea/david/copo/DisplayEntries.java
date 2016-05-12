@@ -28,7 +28,7 @@ public class DisplayEntries extends AppCompatActivity {
     ArrayList<Entry> entries;
     ListView listView;
     TextView instructions;
-    EntriesDBHelper dbHelper;
+    DBHelper dbHelper;
     String typeStr;
     private int type;
 
@@ -59,7 +59,7 @@ public class DisplayEntries extends AppCompatActivity {
         //Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         //setSupportActionBar(toolbar);
 
-        dbHelper = EntriesDBHelper.getInstance(this); // this may be laggy
+        dbHelper = DBHelper.getInstance(this); // this may be laggy
         instructions = (TextView) findViewById(R.id.instructions);
         refreshListView();
 
