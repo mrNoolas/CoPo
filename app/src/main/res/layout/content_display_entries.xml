@@ -26,7 +26,6 @@
     <ListView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/entriesListView">
-    </ListView>
+        android:id="@+id/entries_list_view"/>
 
 </RelativeLayout>

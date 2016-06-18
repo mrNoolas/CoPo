@@ -5,7 +5,7 @@
 <resources>
     <string name="app_name">CoPo</string>
     <string name="action_settings">Instellingen</string>
-    <string name="description">Beschrijving van de situatie</string>
+    <string name="description">Wat is er gebeurt</string>
     <string name="learnedLesson">Wat heb ik hiervan geleerd?</string>
     <string name="title">Titel</string>
 
@@ -39,5 +39,14 @@
     <string name="planning_and_organisation">Plannen en Organiseren</string>
     <string name="add_project">Nieuw project</string>
     <string name="title_activity_projects">ProjectsActivity</string>
+    <string name="title_activity_display_entries">DisplayEntries</string>
+    <string name="projects">Projecten</string>
+    <string name="log">Logboek</string>
+    <string name="portfolio">Portfolio</string>
+    <string name="date">Datum:</string>
+    <string name="project">Project:</string>
+    <string name="competence">Vaardigheid:</string>
+    <string name="achievement">Wat heb ik bereikt?</string>
+    <string name="next_time">Wat doe ik de volgende keer anders?</string>
 
 </resources>

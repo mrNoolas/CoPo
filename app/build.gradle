@@ -14,8 +14,8 @@ android {
         applicationId "com.ic_tea.david.copo"
         minSdkVersion 16
         targetSdkVersion 23
-        versionCode 23
-        versionName "2.0"
+        versionCode 24
+        versionName "2.1"
         vectorDrawables.useSupportLibrary = true
     }
     buildTypes {

@@ -10,48 +10,82 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.TextView;
+
+import com.ic_tea.david.copo.objects.ActionLog;
 
 import java.util.ArrayList;
 
-public class EntryAdapter extends ArrayAdapter<String> {
+public class EntryAdapter extends BaseAdapter {
     private SparseBooleanArray selectedIds;
-    ArrayList<String> objects;
-    LayoutInflater inflater;
-    Context context;
+    private Context context;
+    ArrayList<ActionLog> objects;
+    DBHelper dbHelper;
+
 
     /**
      * @param objects contains the data to display
      */
-    public EntryAdapter(Context context, int resource, ArrayList<String> objects) {
-        super(context, resource, objects);
-
+    public EntryAdapter(Context context, ArrayList<ActionLog> objects) {
         this.objects = objects;
         selectedIds = new SparseBooleanArray();
         this.context = context;
-        inflater = LayoutInflater.from(context);
+
+        dbHelper = DBHelper.getInstance(context);
     }
 
     private static class ViewHolder {
-        TextView item;
-    }
-
-    public View getView(int position, View view, ViewGroup parent) {
-        final ViewHolder holder;
-        if (view == null) {
-            holder = new ViewHolder();
-            view = inflater.inflate(R.layout.entry_item, null);
-            holder.item = (TextView) view.findViewById(R.id.item_text_view);
-            view.setTag(holder);
-        } else {
-            holder = (ViewHolder) view.getTag();
-        }
-        holder.item.setText(objects.get(position));
-        return view;
+        TextView title, project, date, dole; // dole -> date of last edit
     }
 
     @Override
-    public void remove(String object) {
+    public int getCount() {
+        return objects.size();
+    }
+
+    @Override
+    public ActionLog getItem(int position) {
+        return objects.get(position);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent) {
+        final ViewHolder holder;
+        if (convertView == null) {
+            holder = new ViewHolder();
+            convertView = LayoutInflater.from(context).inflate(R.layout.display_entry_list_item, parent);
+            holder.title = (TextView) convertView.findViewById(R.id.deli_title_text_view);
+            holder.project = (TextView) convertView.findViewById(R.id.deli_project_text_view);
+            holder.date = (TextView) convertView.findViewById(R.id.deli_date_text_view);
+            holder.dole = (TextView) convertView.findViewById(R.id.deli_dole_text_view);
+
+            convertView.setTag(holder);
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+        ActionLog item = objects.get(position);
+        holder.title.setText(item.title);
+        holder.project.setText(dbHelper.getProject(item.projectId).title);
+        // Format date from 'DDMMYYYY' to 'DD-MM-YYYY'
+        String date = item.date.substring(0, 2) + "-" + item.date.substring(2, 4) + "-" +
+                item.date.substring(4);
+        holder.date.setText(date);
+
+        // Format date from 'DDMMYYYYHHMM' to 'HH:MM DD-MM-YYYY'
+        String dole = item.DOLE.substring(8, 10) + ":" + item.DOLE.substring(10) + " " +
+                item.DOLE.substring(6, 8) + "-" + item.DOLE.substring(4, 6) + "-" +
+                item.DOLE.substring(0, 4);
+        holder.dole.setText(dole);
+        return convertView;
+    }
+
+    public void remove(ActionLog object) {
         objects.remove(object);
         notifyDataSetChanged();
     }

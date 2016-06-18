@@ -18,6 +18,10 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.ic_tea.david.copo.objects.ActionLog;
+import com.ic_tea.david.copo.objects.PortfolioItem;
+
 import java.util.ArrayList;
 
 public class DisplayEntries extends AppCompatActivity {
@@ -25,34 +29,31 @@ public class DisplayEntries extends AppCompatActivity {
     public static final String INTENT_ENTRY_ID_EXTRA = "com.ic_tea.david.copo.ENTRY";
     public static final int INTENT_REQUEST_EDIT = 1;
     private final String TAG = DisplayEntries.class.getSimpleName();
-    ArrayList<Entry> entries;
+
     ListView listView;
     TextView instructions;
+    ArrayList<ActionLog> entries = new ArrayList<>();
+    ArrayList<PortfolioItem> portfolioItems = new ArrayList<>();
     DBHelper dbHelper;
     String typeStr;
     private int type;
-
-    public static ArrayList<String> getInfo(ArrayList<Entry> entries) {
-        ArrayList<String> info = new ArrayList<>();
-
-        for (Entry entry : entries) {
-            String name = entry.getName();
-
-            // Format date from 'YYYYMMDDHHMM' to 'DD-MM-YYYY'
-            String date = entry.getDateOfLastEdit(); // YYYYMMDDHHMM
-            date = date.substring(6, 8) + "-" + date.substring(4, 6) + "-" + date.substring(0, 4);
-
-            info.add(name + "  |  " + date);
-        }
-        return info;
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         type = getIntent().getIntExtra(MainActivity.INTENT_TYPE_EXTRA, 0);
-        typeStr = getResources().getStringArray(R.array.competences)[type];
+        switch (type) {
+            case 0:
+                typeStr = "Logboek";
+                break;
+            case 1:
+                typeStr = "Portfolio";
+                break;
+            default:
+                typeStr = "Lijst";
+                break;
+        }
         setTitle(typeStr);
 
         setContentView(R.layout.activity_display_entries);
@@ -67,28 +68,45 @@ public class DisplayEntries extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startAddEntryActivity();
+                startEditEntryActivity();
             }
         });
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
 
     private void refreshListView() {
-        entries = dbHelper.getMultipleEntries(type);
-        if (entries.size() > 0) {
-            instructions.setVisibility(View.GONE);
-        } else {
-            instructions.setVisibility(View.VISIBLE);
-        }
-        setupListView(getInfo(entries));
-    }
+        switch (type) {
+            case 0: // Logs
+                entries = dbHelper.getMultipleLogs(0);
+                if (entries.size() > 0) {
+                    instructions.setVisibility(View.GONE);
+                } else {
+                    instructions.setVisibility(View.VISIBLE);
+                }
+                setupListView(entries);
+                break;
 
-    private void startAddEntryActivity() { startAddEntryActivity(-1); }
-    private void startAddEntryActivity(int id) {
-        Intent intent = new Intent(this, EditEntry.class);
-        intent.putExtra(INTENT_TYPE_EXTRA, type);
-        intent.putExtra(INTENT_ENTRY_ID_EXTRA, id);
-        startActivityForResult(intent, INTENT_REQUEST_EDIT);
+            case 1: // Portfolio
+                portfolioItems = dbHelper.getMultiplePortfolioEntries(0);
+                entries = new ArrayList<>(); // reset in case of earlier use. This is for following conditional statement
+
+                if (portfolioItems.size() > 0) {
+                    instructions.setVisibility(View.GONE);
+                    for (PortfolioItem portfolioItem : portfolioItems) {
+                        entries.add(portfolioItem); // this convert eliminates unnecessary method duplicates to handle both portfolioitems and actionlogs
+                    }
+                } else {
+                    instructions.setVisibility(View.VISIBLE);
+                }
+
+                setupListView(entries);
+                break;
+
+            default: // Show empty listview and instructions
+                setupListView(new ArrayList<ActionLog>());
+                instructions.setVisibility(View.VISIBLE);
+                break;
+        }
     }
 
     @Override
@@ -103,14 +121,12 @@ public class DisplayEntries extends AppCompatActivity {
         }
     }
 
-    private void setupListView (ArrayList<String> info) {
-        listView = (ListView) findViewById(R.id.entriesListView);
-        final EntryAdapter entryAdapter =
-                new EntryAdapter(this, R.layout.entry_item, info);
-
+    private void setupListView (ArrayList<ActionLog> items) {
+        listView = (ListView) findViewById(R.id.entries_list_view);
+        final EntryAdapter entryAdapter = new EntryAdapter(this, items);
         listView.setAdapter(entryAdapter);
-
         listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+
         // Capture listview item click
         listView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
             @Override
@@ -148,11 +164,11 @@ public class DisplayEntries extends AppCompatActivity {
                                 int key = selected.keyAt(i);
 
                                 // remove from adapter
-                                String selectedItem = entryAdapter.getItem(key);
+                                ActionLog selectedItem = entryAdapter.getItem(key);
                                 entryAdapter.remove(selectedItem);
 
                                 // remove from db
-                                dbHelper.deleteEntry(entries.get(key));
+                                //dbHelper.deleteEntry(entries.get(key));
                                 entries.remove(key);
                             }
                         }
@@ -165,14 +181,26 @@ public class DisplayEntries extends AppCompatActivity {
                         // Calls getSelectedIds method from EntryListViewAdapter Class
                         selected = entryAdapter.getSelectedIds();
 
-                        // isolate the selected entries
-                        ArrayList<Entry> sharableEntries = new ArrayList<>();
-                        for (int i = (selected.size() - 1); i >= 0; i--) {
-                            if (selected.valueAt(i)) {
-                                sharableEntries.add(entries.get(selected.keyAt(i)));
+                        if (type == 1) { // portfolio items
+                            // isolate the selected entries
+                            ArrayList<PortfolioItem> sharableEntries = new ArrayList<>();
+                            for (int i = (selected.size() - 1); i >= 0; i--) {
+                                if (selected.valueAt(i)) {
+                                    sharableEntries.add(portfolioItems.get(selected.keyAt(i)));
+                                }
                             }
+                            startShareIntent(sharableEntries);
+                        } else {
+                            // isolate the selected entries
+                            ArrayList<ActionLog> sharableEntries = new ArrayList<>();
+                            for (int i = (selected.size() - 1); i >= 0; i--) {
+                                if (selected.valueAt(i)) {
+                                    sharableEntries.add(entries.get(selected.keyAt(i)));
+                                }
+                            }
+                            startShareIntent(sharableEntries, true);
                         }
-                        startShareIntent(sharableEntries);
+
                         mode.finish();
                         return true;
                     default:
@@ -191,18 +219,33 @@ public class DisplayEntries extends AppCompatActivity {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                startAddEntryActivity(entries.get(position).getId());
+                startEditEntryActivity(entries.get(position).id);
             }
         });
     }
 
-    private void startShareIntent(ArrayList<Entry> sharableEntries) {
+    private void startShareIntent(ArrayList<ActionLog> sharableEntries, Boolean isLog) {
         // if no sharable entries were found
-        if (!Entry.share(this, sharableEntries)) {
+        if (!ActionLog.share(this, sharableEntries)) {
+            String noEntriesMessage = getString(R.string.no_sharable_entries_message);
+            Toast toast = Toast.makeText(this, noEntriesMessage, Toast.LENGTH_SHORT);
+            toast.show();
+        }
+    }
+    private void startShareIntent(ArrayList<PortfolioItem> sharableEntries) {
+        // if no sharable entries were found
+        if (!PortfolioItem.sharePortfolio(this, sharableEntries)) {
             String noEntriesMessage = getString(R.string.no_sharable_entries_message);
             Toast toast = Toast.makeText(this, noEntriesMessage, Toast.LENGTH_SHORT);
             toast.show();
         }
     }
 
+    private void startEditEntryActivity() { startEditEntryActivity(-1); }
+    private void startEditEntryActivity(int id) {
+        Intent intent = new Intent(this, EditEntry.class);
+        intent.putExtra(INTENT_TYPE_EXTRA, type);
+        intent.putExtra(INTENT_ENTRY_ID_EXTRA, id);
+        startActivityForResult(intent, INTENT_REQUEST_EDIT);
+    }
 }

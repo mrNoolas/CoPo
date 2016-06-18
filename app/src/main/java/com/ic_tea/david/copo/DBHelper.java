@@ -25,13 +25,12 @@ public class DBHelper extends SQLiteOpenHelper{
     private static final String TAG = DBHelper.class.getSimpleName();
     // Database info
     private static final String DATABASE_NAME = "CoPoDatabaseOfAwesomeness";
-    private static final int DATABASE_VERSION = 4;
+    private static final int DATABASE_VERSION = 8;
 
     // table names
     private static final String TABLE_LEVELS = "levels"; // this table has all the possible user levels
     private static final String TABLE_COMPETENCES = "competences";
-    private static final String TABLE_LEVELS_COMPETENCES = "levelsCompetences"; // linking table
-
+    //private static final String TABLE_LEVELS_COMPETENCES = "levelsCompetences"; // linking table
     private static final String TABLE_PROJECTS = "projects";
     private static final String TABLE_LOGS = "articles";
     private static final String TABLE_PORTFOLIOS = "portfolios";
@@ -46,25 +45,26 @@ public class DBHelper extends SQLiteOpenHelper{
     // competence columns
     private static final String KEY_COMPETENCE_ID = "categoryId";
     private static final String KEY_COMPETENCE_TITLE = "title";
-    private static final String KEY_COMPETENCE_DESCR = "description";
+    //private static final String KEY_COMPETENCE_DESCR = "description";
 
-    // levelsCompetences columns (linking table)
+    /*/ levelsCompetences columns (linking table)
     private static final String KEY_L_C_ID = "LevelCompetenceId";
     private static final String KEY_L_C_LEVEL_ID = "levelId"; // foreign key
-    private static final String KEY_L_C_COMPETENCE_ID = "competenceId"; // foreign key
-
+    private static final String KEY_L_C_COMPETENCE_ID = "competenceId"; // foreign key*/
 
     // projects columns
     private static final String KEY_PROJECT_ID = "projectId";
     private static final String KEY_PROJECT_TITLE = "title";
     private static final String KEY_PROJECT_DESCR = "description";
 
+    // ADD: column which records the amount of time spent on a certain action
     // logs columns
     private static final String KEY_LOG_ID = "logId";
     private static final String KEY_LOG_PROJECT_ID = "projectId"; // foreign key
+    private static final String KEY_LOG_DATE_OF_LAST_EDIT = "dateOfLastAction";
     private static final String KEY_LOG_TITLE = "title";
     private static final String KEY_LOG_DATE_OF_ACTION = "dateOfAction";
-    private static final String KEY_LOG_DATE_OF_LAST_EDIT = "dateOfLastAction";
+    private static final String KEY_LOG_HOURS_SPENT = "hoursSpent";
     private static final String KEY_LOG_DESCR = "description";
     private static final String KEY_LOG_ACHIEVEMENTS = "achievements";
 
@@ -72,9 +72,10 @@ public class DBHelper extends SQLiteOpenHelper{
     private static final String KEY_PORTFOLIO_ID = "portfolioId";
     private static final String KEY_PORTFOLIO_PROJECT_ID = "projectid"; // foreign key
     private static final String KEY_PORTFOLIO_COMPETENCE_ID = "categoryid"; // foreign key
+    private static final String KEY_PORTFOLIO_DATE_Of_LAST_EDIT = "DOLE";
     private static final String KEY_PORTFOLIO_TITLE = "title";
     private static final String KEY_PORTFOLIO_DATE_OF_ACTION = "dateOfAction";
-    private static final String KEY_PORTFOLIO_DATE_Of_LAST_EDIT = "DOLE";
+    private static final String KEY_PORTFOLIO_HOURS_SPENT = "hoursSpent";
     private static final String KEY_PORTFOLIO_DESCR = "description";
     private static final String KEY_PORTFOLIO_ACHIEVEMENTS = "achievements";
     private static final String KEY_PORTFOLIO_LESSON_LEARNED = "lessonLearned";
@@ -125,11 +126,11 @@ public class DBHelper extends SQLiteOpenHelper{
         db.execSQL("CREATE TABLE " + TABLE_COMPETENCES +
                 "(" +
                 KEY_COMPETENCE_ID + " INTEGER PRIMARY KEY," +
-                KEY_COMPETENCE_TITLE + " TEXT," +
-                KEY_COMPETENCE_DESCR + " TEXT" +
+                KEY_COMPETENCE_TITLE + " TEXT" + //"," +
+                //KEY_COMPETENCE_DESCR + " TEXT" +
                 ")");
 
-        db.execSQL("CREATE TABLE " + TABLE_LEVELS_COMPETENCES +
+        /*db.execSQL("CREATE TABLE " + TABLE_LEVELS_COMPETENCES +
                 "(" +
                 KEY_L_C_ID + " INTEGER PRIMARY KEY," +
                 KEY_L_C_LEVEL_ID + " INTEGER," +
@@ -139,8 +140,7 @@ public class DBHelper extends SQLiteOpenHelper{
                 TABLE_LEVELS + "(" + KEY_LEVEL_ID + ")," +
                 "FOREIGN KEY(" + KEY_L_C_COMPETENCE_ID + ") REFERENCES " +
                 TABLE_COMPETENCES + "(" + KEY_COMPETENCE_ID + ")" +
-                ")");
-
+                ")");*/
 
         db.execSQL("CREATE TABLE " + TABLE_PROJECTS +
                 "(" +
@@ -153,9 +153,10 @@ public class DBHelper extends SQLiteOpenHelper{
                 "(" +
                 KEY_LOG_ID + " INTEGER PRIMARY KEY," +
                 KEY_LOG_PROJECT_ID + " INTEGER NOT NULL," +
-                KEY_LOG_TITLE + " TEXT," +
-                KEY_LOG_DATE_OF_ACTION + " TEXT," + // DDMMYYYYHHMM
                 KEY_LOG_DATE_OF_LAST_EDIT + " TEXT," + // DDMMYYYYHHMM
+                KEY_LOG_TITLE + " TEXT," +
+                KEY_LOG_DATE_OF_ACTION + " TEXT," + // DDMMYYYY
+                KEY_LOG_HOURS_SPENT + " INTEGER," +
                 KEY_LOG_DESCR + " TEXT," +
                 KEY_LOG_ACHIEVEMENTS + " TEXT," +
 
@@ -168,9 +169,10 @@ public class DBHelper extends SQLiteOpenHelper{
                 KEY_PORTFOLIO_ID + " INTEGER PRIMARY KEY," +
                 KEY_PORTFOLIO_PROJECT_ID + " INTEGER NOT NULL," +
                 KEY_PORTFOLIO_COMPETENCE_ID + " INTEGER NOT NULL," +
-                KEY_PORTFOLIO_TITLE + " TEXT," +
-                KEY_PORTFOLIO_DATE_OF_ACTION + " TEXT," + // DDMMYYYYHHMM
                 KEY_PORTFOLIO_DATE_Of_LAST_EDIT + " TEXT," + // DDMMYYYYHHMM
+                KEY_PORTFOLIO_TITLE + " TEXT," +
+                KEY_PORTFOLIO_DATE_OF_ACTION + " TEXT," + // DDMMYYYY
+                KEY_LOG_HOURS_SPENT + " INTEGER," +
                 KEY_PORTFOLIO_DESCR + " TEXT," +
                 KEY_PORTFOLIO_ACHIEVEMENTS + " TEXT," +
                 KEY_PORTFOLIO_LESSON_LEARNED + " TEXT," +
@@ -197,11 +199,24 @@ public class DBHelper extends SQLiteOpenHelper{
                 "FOREIGN KEY(" + KEY_GOAL_PARENT_ID + ") REFERENCES " +
                 TABLE_GOALS + "(" + KEY_GOAL_ID + ")" +
                 ")");
-        addAllDefaults();
+
+        addAllDefaults(db);
     }
 
-    private void addAllDefaults() {
+    private void addAllDefaults(SQLiteDatabase db) {
         // ADD: Defaults
+
+        // Levels
+        // CHANGE: description of the levels
+        addOrUpdateLevel(new EduLevel("Basis", "Het eerst te behalen niveau voor nieuwe leerlingen, die weinig ervaring hebben met projectmatig"), db);
+        addOrUpdateLevel(new EduLevel("Master", "Tweede level"), db);
+        addOrUpdateLevel(new EduLevel("Expert", "Derde level"), db);
+
+        // Competences
+        addOrUpdateCompetence(new Competence("Motivatie"), db);
+        addOrUpdateCompetence(new Competence("Zelfbeeld"), db);
+        addOrUpdateCompetence(new Competence("Houding"), db);
+        addOrUpdateCompetence(new Competence("Vaardigheden"), db);
     }
 
     @Override
@@ -211,7 +226,6 @@ public class DBHelper extends SQLiteOpenHelper{
             // Simplest implementation is to drop all old tables and recreate them
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_LEVELS);
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_COMPETENCES);
-            db.execSQL("DROP TABLE IF EXISTS " + TABLE_LEVELS_COMPETENCES);
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_PROJECTS);
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_LOGS);
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_PORTFOLIOS);
@@ -223,9 +237,11 @@ public class DBHelper extends SQLiteOpenHelper{
 
     // ADD: all the interaction functions for the tables
     public void addOrUpdateLevel(EduLevel level) {
-        // Open db
         SQLiteDatabase db = getWritableDatabase();
-
+        addOrUpdateLevel(level, db);
+    }
+    public void addOrUpdateLevel(EduLevel level, SQLiteDatabase db) {
+        // Open db
         db.beginTransaction();
         try {
             ContentValues values = new ContentValues();
@@ -280,14 +296,16 @@ public class DBHelper extends SQLiteOpenHelper{
     }
 
     public void addOrUpdateCompetence(Competence competence) {
-        // Open db
         SQLiteDatabase db = getWritableDatabase();
-
+        addOrUpdateCompetence(competence, db);
+    }
+    public void addOrUpdateCompetence(Competence competence, SQLiteDatabase db) {
+        // Open db
         db.beginTransaction();
         try {
             ContentValues values = new ContentValues();
             values.put(KEY_COMPETENCE_TITLE, competence.title);
-            values.put(KEY_COMPETENCE_DESCR, competence.descr);
+            //values.put(KEY_COMPETENCE_DESCR, competence.descr);
 
             // First try to update the entry
             int rows = 0;
@@ -320,9 +338,9 @@ public class DBHelper extends SQLiteOpenHelper{
                 // This is not a efficient way of querrying (use predetermined index) but the db is small so, not huge deal...
                 int id = cursor.getInt(cursor.getColumnIndex(KEY_COMPETENCE_ID));
                 String title = cursor.getString(cursor.getColumnIndex(KEY_COMPETENCE_TITLE));
-                String description = cursor.getString(cursor.getColumnIndex(KEY_COMPETENCE_DESCR));
+                //String description = cursor.getString(cursor.getColumnIndex(KEY_COMPETENCE_DESCR));
 
-                return new Competence(id, title, description);
+                return new Competence(id, title);
             } else {
                 throw new Exception("No levels returned from database!");
             }
@@ -335,87 +353,36 @@ public class DBHelper extends SQLiteOpenHelper{
         }
         return null;
     }
+    public ArrayList<Competence> getMultipleCompetences(int type) {
+        ArrayList<Competence> competences = new ArrayList<>();
+        String COMPETENCE_SELECT_QUERY;
 
-    public void addOrUpdateLevelToCompetenceRelation(int key, Competence competence, EduLevel level) {
-        // Open db
-        SQLiteDatabase db = getWritableDatabase();
+        if (type == 0) {
+            COMPETENCE_SELECT_QUERY = String.format("SELECT * FROM %s", TABLE_COMPETENCES);
+        } else {
+            COMPETENCE_SELECT_QUERY =
+                    String.format("SELECT * FROM %s WHERE %s = '%s'", TABLE_COMPETENCES,
+                            KEY_COMPETENCE_ID, type);
+        }
 
-        db.beginTransaction();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.rawQuery(COMPETENCE_SELECT_QUERY, null);
         try {
-            ContentValues values = new ContentValues();
-            values.put(KEY_L_C_LEVEL_ID, level.id);
-            values.put(KEY_L_C_COMPETENCE_ID, competence.id);
+            if (cursor.moveToFirst()) {
+                do {
+                    // This is not a efficient way of querrying (use predetermined index) but the db is small so, not huge deal...
+                    int id = cursor.getInt(cursor.getColumnIndex(KEY_COMPETENCE_ID));
+                    String title = cursor.getString(cursor.getColumnIndex(KEY_COMPETENCE_TITLE));
+                    //String description = cursor.getString(cursor.getColumnIndex(KEY_COMPETENCE_DESCR));
 
-            // First try to update the entry
-            int rows = 0;
-            if (key != -1) { // when the id is -1, it has been manually set.
-                rows = db.update(TABLE_LEVELS_COMPETENCES, values,
-                        KEY_L_C_ID + "= ?", new String[]{Integer.toString(key)});
-            }
-            if (rows == 1) {
-                db.setTransactionSuccessful();
-            } else {
-                // insert new entry
-                db.insertOrThrow(TABLE_LEVELS_COMPETENCES, null, values);
-                db.setTransactionSuccessful();
+                    competences.add(new Competence(id, title));
+                } while (cursor.moveToNext());
             }
         } catch (Exception e) {
-            Log.e(TAG, "Error while trying to add an entry to db");
+            Log.e(TAG, "Error while getting competences from db");
         } finally {
-            db.endTransaction();
-        }
-    }
-    public ArrayList<Competence> getCompetencesFromLevel(EduLevel level) {
-        ArrayList<Competence> competences = new ArrayList<>();
-        SQLiteDatabase db = getReadableDatabase();
-
-        if (level == null) {
-            // return all
-            String COMPETENCE_SELECT_QUERY =
-                    String.format("SELECT * FROM %s", TABLE_COMPETENCES);
-
-            Cursor cursor = db.rawQuery(COMPETENCE_SELECT_QUERY, null);
-            try {
-                if (cursor.moveToFirst()) {
-                    do {
-                        int id = cursor.getInt(cursor.getColumnIndex(KEY_COMPETENCE_ID));
-                        String title = cursor.getString(cursor.getColumnIndex(KEY_COMPETENCE_TITLE));
-                        String description = cursor.getString(cursor.getColumnIndex(KEY_COMPETENCE_DESCR));
-
-                        competences.add(new Competence(id, title, description));
-                    } while (cursor.moveToNext());
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Error while getting competences from db");
-            } finally {
-                if (cursor != null && !cursor.isClosed()) {
-                    cursor.close();
-                }
-            }
-        } else {
-            // First get the Competence id's
-            String COMPETENCE_ID_QUERY =
-                    String.format("SELECT * FROM %s WHERE %s = '%s'", TABLE_LEVELS_COMPETENCES,
-                            KEY_L_C_LEVEL_ID, level.id);
-
-            ArrayList<Integer> competenceIds = new ArrayList<>();
-            Cursor cursor = db.rawQuery(COMPETENCE_ID_QUERY, null);
-            try {
-                if (cursor.moveToFirst()) {
-                    do {
-                        competenceIds.add(cursor.getInt(cursor.getColumnIndex(KEY_L_C_COMPETENCE_ID)));
-                    } while (cursor.moveToNext());
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Error while getting competences from db");
-            } finally {
-                if (cursor != null && !cursor.isClosed()) {
-                    cursor.close();
-                }
-            }
-
-            for(int key : competenceIds) {
-                competences.add(getCompetence(key));
+            if (cursor != null && !cursor.isClosed()) {
+                cursor.close();
             }
         }
         return competences;
@@ -492,7 +459,7 @@ public class DBHelper extends SQLiteOpenHelper{
             db.endTransaction();
         }
     }
-    public ArrayList<Project> getAllProjects(int type) {
+    public ArrayList<Project> getMultipleProjects(int type) {
         ArrayList<Project> projects = new ArrayList<>();
         String PROJECT_SELECT_QUERY;
 
@@ -583,13 +550,15 @@ public class DBHelper extends SQLiteOpenHelper{
                 // This is not a efficient way of querrying (use predetermined index) but the db is small so, not huge deal...
                 int id = cursor.getInt(cursor.getColumnIndex(KEY_LOG_ID));
                 int projectId = cursor.getInt(cursor.getColumnIndex(KEY_LOG_PROJECT_ID));
+                String dateOfLastEdit = cursor.getString(cursor.getColumnIndex(KEY_LOG_DATE_OF_LAST_EDIT));
                 String title = cursor.getString(cursor.getColumnIndex(KEY_LOG_TITLE));
                 String dateOfAction = cursor.getString(cursor.getColumnIndex(KEY_LOG_DATE_OF_ACTION));
-                String dateOfLastEdit = cursor.getString(cursor.getColumnIndex(KEY_LOG_DATE_OF_LAST_EDIT));
+                int hoursSpent = cursor.getInt(cursor.getColumnIndex(KEY_LOG_HOURS_SPENT));
                 String description = cursor.getString(cursor.getColumnIndex(KEY_LOG_DESCR));
                 String achievements = cursor.getString(cursor.getColumnIndex(KEY_LOG_ACHIEVEMENTS));
 
-                return new ActionLog(id, projectId, title, dateOfAction, dateOfLastEdit, description, achievements);
+                return new ActionLog(id, projectId, dateOfLastEdit, title, dateOfAction, hoursSpent,
+                        description, achievements);
             } else {
                 throw new Exception("No entries returned from database!");
             }
@@ -602,16 +571,16 @@ public class DBHelper extends SQLiteOpenHelper{
         }
         return null;
     }
-    public ArrayList<ActionLog> getMultipleLogs (int type) {
+    public ArrayList<ActionLog> getMultipleLogs (int idKey) {
         ArrayList<ActionLog> logs = new ArrayList<>();
 
         String LOG_SELECT_QUERY;
-        if (type == 0) {
+        if (idKey <= 0) {
             LOG_SELECT_QUERY =
                     String.format("SELECT * FROM %s", TABLE_LOGS);
         } else {
             LOG_SELECT_QUERY =
-                    String.format("SELECT * FROM %s WHERE %s = '%s'", TABLE_LOGS, KEY_LOG_ID, type);
+                    String.format("SELECT * FROM %s WHERE %s = '%s'", TABLE_LOGS, KEY_LOG_ID, idKey);
         }
         SQLiteDatabase db = getReadableDatabase();
         Cursor cursor = db.rawQuery(LOG_SELECT_QUERY, null);
@@ -620,14 +589,15 @@ public class DBHelper extends SQLiteOpenHelper{
                 do {
                     int id = cursor.getInt(cursor.getColumnIndex(KEY_LOG_ID));
                     int projectId = cursor.getInt(cursor.getColumnIndex(KEY_LOG_PROJECT_ID));
+                    String dateOfLastEdit = cursor.getString(cursor.getColumnIndex(KEY_LOG_DATE_OF_LAST_EDIT));
                     String title = cursor.getString(cursor.getColumnIndex(KEY_LOG_TITLE));
                     String dateOfAction = cursor.getString(cursor.getColumnIndex(KEY_LOG_DATE_OF_ACTION));
-                    String dateOfLastEdit = cursor.getString(cursor.getColumnIndex(KEY_LOG_DATE_OF_LAST_EDIT));
+                    int hoursSpent = cursor.getInt(cursor.getColumnIndex(KEY_LOG_HOURS_SPENT));
                     String description = cursor.getString(cursor.getColumnIndex(KEY_LOG_DESCR));
                     String achievements = cursor.getString(cursor.getColumnIndex(KEY_LOG_ACHIEVEMENTS));
 
-                    logs.add(new ActionLog(id, projectId, title, dateOfAction, dateOfLastEdit,
-                            description, achievements));
+                    logs.add(new ActionLog(id, projectId, dateOfLastEdit, title, dateOfAction,
+                            hoursSpent, description, achievements));
                 } while (cursor.moveToNext());
             }
         } catch (Exception e) {
@@ -704,16 +674,17 @@ public class DBHelper extends SQLiteOpenHelper{
                 int id = cursor.getInt(cursor.getColumnIndex(KEY_PORTFOLIO_ID));
                 int projectId = cursor.getInt(cursor.getColumnIndex(KEY_PORTFOLIO_PROJECT_ID));
                 int competenceId = cursor.getInt(cursor.getColumnIndex(KEY_PORTFOLIO_COMPETENCE_ID));
-                String title = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_TITLE));
                 String dateOfLastEdit = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_DATE_Of_LAST_EDIT));
+                String title = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_TITLE));
                 String date = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_DATE_OF_ACTION));
+                int hoursSpent = cursor.getInt(cursor.getColumnIndex(KEY_PORTFOLIO_HOURS_SPENT));
                 String description = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_DESCR));
                 String achievements = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_ACHIEVEMENTS));
                 String lessonLearned = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_LESSON_LEARNED));
                 String nextTime = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_NEXT_TIME));
 
-                return new PortfolioItem(id, projectId, competenceId, title, date, dateOfLastEdit,
-                        description, achievements, lessonLearned, nextTime);
+                return new PortfolioItem(id, projectId, competenceId, dateOfLastEdit, title, date,
+                        hoursSpent, description, achievements, lessonLearned, nextTime);
             } else {
                 throw new Exception("No portfolio items returned from database!");
             }
@@ -728,6 +699,7 @@ public class DBHelper extends SQLiteOpenHelper{
     }
     public ArrayList<PortfolioItem> getMultiplePortfolioEntries (int type) {
         ArrayList<PortfolioItem> portfolioItems = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
 
         String PORTFOLIOS_SELECT_QUERY;
         if (type == 0) {
@@ -737,7 +709,7 @@ public class DBHelper extends SQLiteOpenHelper{
             PORTFOLIOS_SELECT_QUERY =
                     String.format("SELECT * FROM %s WHERE %s = '%s'", TABLE_PORTFOLIOS, KEY_PORTFOLIO_ID, type);
         }
-        SQLiteDatabase db = getReadableDatabase();
+
         Cursor cursor = db.rawQuery(PORTFOLIOS_SELECT_QUERY, null);
         try {
             if (cursor.moveToFirst()) {
@@ -746,16 +718,17 @@ public class DBHelper extends SQLiteOpenHelper{
                     int id = cursor.getInt(cursor.getColumnIndex(KEY_PORTFOLIO_ID));
                     int projectId = cursor.getInt(cursor.getColumnIndex(KEY_PORTFOLIO_PROJECT_ID));
                     int competenceId = cursor.getInt(cursor.getColumnIndex(KEY_PORTFOLIO_COMPETENCE_ID));
-                    String title = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_TITLE));
                     String dateOfLastEdit = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_DATE_Of_LAST_EDIT));
+                    String title = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_TITLE));
                     String date = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_DATE_OF_ACTION));
+                    int hoursSpent = cursor.getInt(cursor.getColumnIndex(KEY_PORTFOLIO_HOURS_SPENT));
                     String description = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_DESCR));
                     String achievements = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_ACHIEVEMENTS));
                     String lessonLearned = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_LESSON_LEARNED));
                     String nextTime = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_NEXT_TIME));
 
-                    portfolioItems.add(new PortfolioItem(id, projectId, competenceId, title, date, dateOfLastEdit,
-                            description, achievements, lessonLearned, nextTime));
+                    portfolioItems.add(new PortfolioItem(id, projectId, competenceId,  dateOfLastEdit,
+                            title, date, hoursSpent, description, achievements, lessonLearned, nextTime));
                 } while (cursor.moveToNext());
             }
         } catch (Exception e) {
@@ -884,6 +857,114 @@ public class DBHelper extends SQLiteOpenHelper{
         }
         return goals;
     }
+
+    public int getPoints(int type) {
+        int points = 0;
+        int logWeight = 1;
+        int portfolioWeight = 2;
+
+        switch (type) {
+            case 0: // only logs
+                points += (getMultipleLogs(0).size()) * logWeight;
+                break;
+            case 1: // only portfolio's
+                points += getMultiplePortfolioEntries(0).size() * portfolioWeight;
+                break;
+            case 2:
+                points += getMultiplePortfolioEntries(0).size() * portfolioWeight;
+                points += getMultipleLogs(0).size() * logWeight;
+                break;
+            default:
+                points = -1;
+                break;
+        }
+        return points;
+    }
+
+    /*public void addOrUpdateLevelToCompetenceRelation(int key, Competence competence, EduLevel level) {
+        // Open db
+        SQLiteDatabase db = getWritableDatabase();
+
+        db.beginTransaction();
+        try {
+            ContentValues values = new ContentValues();
+            values.put(KEY_L_C_LEVEL_ID, level.id);
+            values.put(KEY_L_C_COMPETENCE_ID, competence.id);
+
+            // First try to update the entry
+            int rows = 0;
+            if (key != -1) { // when the id is -1, it has been manually set.
+                rows = db.update(TABLE_LEVELS_COMPETENCES, values,
+                        KEY_L_C_ID + "= ?", new String[]{Integer.toString(key)});
+            }
+            if (rows == 1) {
+                db.setTransactionSuccessful();
+            } else {
+                // insert new entry
+                db.insertOrThrow(TABLE_LEVELS_COMPETENCES, null, values);
+                db.setTransactionSuccessful();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error while trying to add an entry to db");
+        } finally {
+            db.endTransaction();
+        }
+    }
+    public ArrayList<Competence> getCompetencesFromLevel(EduLevel level) {
+        ArrayList<Competence> competences = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+
+        if (level == null) {
+            // return all
+            String COMPETENCE_SELECT_QUERY =
+                    String.format("SELECT * FROM %s", TABLE_COMPETENCES);
+
+            Cursor cursor = db.rawQuery(COMPETENCE_SELECT_QUERY, null);
+            try {
+                if (cursor.moveToFirst()) {
+                    do {
+                        int id = cursor.getInt(cursor.getColumnIndex(KEY_COMPETENCE_ID));
+                        String title = cursor.getString(cursor.getColumnIndex(KEY_COMPETENCE_TITLE));
+                        String description = cursor.getString(cursor.getColumnIndex(KEY_COMPETENCE_DESCR));
+
+                        competences.add(new Competence(id, title, description));
+                    } while (cursor.moveToNext());
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error while getting competences from db");
+            } finally {
+                if (cursor != null && !cursor.isClosed()) {
+                    cursor.close();
+                }
+            }
+        } else {
+            // First get the Competence id's
+            String COMPETENCE_ID_QUERY =
+                    String.format("SELECT * FROM %s WHERE %s = '%s'", TABLE_LEVELS_COMPETENCES,
+                            KEY_L_C_LEVEL_ID, level.id);
+
+            ArrayList<Integer> competenceIds = new ArrayList<>();
+            Cursor cursor = db.rawQuery(COMPETENCE_ID_QUERY, null);
+            try {
+                if (cursor.moveToFirst()) {
+                    do {
+                        competenceIds.add(cursor.getInt(cursor.getColumnIndex(KEY_L_C_COMPETENCE_ID)));
+                    } while (cursor.moveToNext());
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error while getting competences from db");
+            } finally {
+                if (cursor != null && !cursor.isClosed()) {
+                    cursor.close();
+                }
+            }
+
+            for(int key : competenceIds) {
+                competences.add(getCompetence(key));
+            }
+        }
+        return competences;
+    }*/
 
 
     // default methods
