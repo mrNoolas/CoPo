@@ -8,6 +8,7 @@ import android.app.DatePickerDialog;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -37,6 +38,7 @@ public class EditEntry extends AppCompatActivity implements DatePickerDialog.OnD
 
     String dateOfAction;
     int type = 0;
+    int projectId = 0;
     DBHelper dbHelper;
     ActionLog workingLog;
     PortfolioItem workingPortfolioItem;
@@ -50,6 +52,21 @@ public class EditEntry extends AppCompatActivity implements DatePickerDialog.OnD
         dbHelper = DBHelper.getInstance(this);
         int id = getIntent().getIntExtra(DisplayEntries.INTENT_ENTRY_ID_EXTRA, -1);
         type = getIntent().getIntExtra(DisplayEntries.INTENT_TYPE_EXTRA, -1);
+        projectId = getIntent().getIntExtra(DisplayEntries.INTENT_PROJECT_ID_EXTRA, -1);
+
+        if (projectId > 0) {
+            if (type == 0) {
+                setTitle(getString(R.string.log) + " - " + dbHelper.getProject(projectId).title);
+            } else if (type == 1) {
+                setTitle(getString(R.string.portfolio) + " - " +  dbHelper.getProject(projectId).title);
+            }
+        } else {
+            if (type == 0) {
+                setTitle(getString(R.string.log));
+            } else if (type == 1) {
+                setTitle(getString(R.string.portfolio));
+            }
+        }
 
         // Log and portfolio
         projectSpinner = (Spinner) findViewById(R.id.aee_project_spinner);
@@ -75,9 +92,8 @@ public class EditEntry extends AppCompatActivity implements DatePickerDialog.OnD
 
         if (type == 0) { // Log
             // hide the things that are not used for a log
+            findViewById(R.id.aee_competence_spinner_layout).setVisibility(View.GONE);
             competenceSpinner.setVisibility(View.GONE);
-
-
             lessonLearnedEditText.setVisibility(View.GONE);
             nextTimeEditText.setVisibility(View.GONE);
 
@@ -92,10 +108,11 @@ public class EditEntry extends AppCompatActivity implements DatePickerDialog.OnD
                 }
                 titleEditText.setText(workingLog.title);
                 // Format date from 'DDMMYYYY' to 'DD-MM-YYYY'
-                dateSetButton.setText(
+                String dateText =
                         getString(R.string.date) + " " + workingLog.date.substring(0, 2) + "-" +
-                                workingLog.date.substring(2, 4) + "-" + workingLog.date.substring(4));
-                hoursSpentEditText.setText(workingLog.hoursSpent);
+                                workingLog.date.substring(2, 4) + "-" + workingLog.date.substring(4);
+                dateSetButton.setText(dateText);
+                hoursSpentEditText.setText(Double.toString(workingLog.hoursSpent));
                 descriptionEditText.setText(workingLog.descr);
                 achievementsEditText.setText(workingLog.achievements);
             }
@@ -113,11 +130,12 @@ public class EditEntry extends AppCompatActivity implements DatePickerDialog.OnD
                 }
                 titleEditText.setText(workingPortfolioItem.title);
                 // Format date from 'DDMMYYYY' to 'DD-MM-YYYY'
-                dateSetButton.setText(
-                        getString(R.string.date) + " " + workingPortfolioItem.date.substring(0, 2)
-                                + "-" + workingPortfolioItem.date.substring(2, 4) + "-" +
-                                workingPortfolioItem.date.substring(4));
-                hoursSpentEditText.setText(workingPortfolioItem.hoursSpent);
+                String dateText = getString(R.string.date) + " " + workingPortfolioItem.date.substring(0, 2)
+                        + "-" + workingPortfolioItem.date.substring(2, 4) + "-" +
+                        workingPortfolioItem.date.substring(4);
+                dateSetButton.setText(dateText);
+
+                hoursSpentEditText.setText(Double.toString(workingPortfolioItem.hoursSpent));
                 descriptionEditText.setText(workingPortfolioItem.descr);
                 achievementsEditText.setText(workingPortfolioItem.achievements);
                 lessonLearnedEditText.setText(workingPortfolioItem.lessonLearned);
@@ -152,6 +170,14 @@ public class EditEntry extends AppCompatActivity implements DatePickerDialog.OnD
 
         projectSpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         projectSpinner.setAdapter(projectSpinnerAdapter);
+
+        if (projectId > 0) {
+            for (int i = 0; i < projects.size(); i++) {
+                if (projects.get(i).id == projectId) {
+                    projectSpinner.setSelection(i);
+                }
+            }
+        }
     }
 
     private void prepareDateSetButton() {
@@ -181,7 +207,8 @@ public class EditEntry extends AppCompatActivity implements DatePickerDialog.OnD
     }
 
     public void save(View view) {
-        int projectId, competenceId, hoursSpent;
+        int projectId, competenceId;
+        double hoursSpent;
         String DOLE, title, actionDate, description, achievement, lessonLearned, nextTime;
 
         projectId = dbHelper.getMultipleProjects(0).get(projectSpinner.getSelectedItemPosition()).id;
@@ -191,7 +218,15 @@ public class EditEntry extends AppCompatActivity implements DatePickerDialog.OnD
 
         title = titleEditText.getText().toString();
         actionDate = dateOfAction;
-        hoursSpent = Integer.getInteger(hoursSpentEditText.getText().toString()); //bweghh, I know...
+        hoursSpent = 0;
+        try {
+            Log.i("tag", hoursSpentEditText.getText().toString());
+            hoursSpent = Double.parseDouble(hoursSpentEditText.getText().toString()); //bweghh, I know...
+            Log.i("tag", Double.toString(hoursSpent));
+        } catch (NumberFormatException e) {
+            // too bad :( the edit-text is most likely empty
+        }
+
         description = descriptionEditText.getText().toString();
         achievement = achievementsEditText.getText().toString();
 
