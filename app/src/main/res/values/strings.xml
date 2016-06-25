@@ -5,7 +5,7 @@
 <resources>
     <string name="app_name">CoPo</string>
     <string name="action_settings">Instellingen</string>
-    <string name="description">Wat is er gebeurt</string>
+    <string name="what_happened">Wat is er gebeurt</string>
     <string name="learnedLesson">Wat heb ik hiervan geleerd?</string>
     <string name="title">Titel</string>
 
@@ -22,15 +22,10 @@
     <string name="select_competence_mesage">Selecteer een competentie om de bijbehorende portfolio-verslagen weer te geven</string>
     <string name="share_all">Alles delen</string>
     <string name="no_sharable_entries_message">Er zijn geen deelbare verslagen gevonden</string>
-    <string name="automatically_generated_email_message">Dit is een automatisch gegenereert bericht door de CoPo (Vaardigheden Portfolio) app. Dit bericht bevat een selectie van portfolio-items, die zijn gedeeld via e-mail. Deze selectie is gegenereert op: </string>
-    <string name="competence_email">\nVaardigheid: </string>
-    <string name="description_situation_email">\n\nOmschrijving van de situatie:\n\"</string>
-    <string name="lesson_learned_email">\"\n\nWat heb ik hiervan geleerd:\n\"</string>
-    <string name="selected_shareselect"> geselecteerd</string>
 
     <string name="all">Alles</string>
     <string name="perseverance">Doorzetten</string>
-    <string name="working_alone">individueel werken</string>
+    <string name="working_alone">Individueel werken</string>
     <string name="process_orientation">Procesgerichtheid</string>
     <string name="knowledge_orientation">Kennisgerichtheid</string>
     <string name="collaboration">Samenwerken</string>
@@ -48,5 +43,19 @@
     <string name="competence">Vaardigheid:</string>
     <string name="achievement">Wat heb ik bereikt?</string>
     <string name="next_time">Wat doe ik de volgende keer anders?</string>
+    <string name="description">Omschrijving:</string>
+    <string name="logs">Logboek</string>
+    <string name="goals">Doelen</string>
+    <string name="edit_project">Project aanpassen</string>
+    <string name="title_activity_display_projects">Projecten</string>
+
+    <!-- sharing -->
+    <string name="message_divider">\n\n==================================================\n\n</string>
+    <string name="message_start_1">Dit is een automatisch gegenereerd bericht door de \'</string>
+    <string name="message_start_2">\' Competentie en Portfolio app.</string>
+    <string name="message_end">Wanneer u vragen en/of opmerkingen heeft over dit bericht kunt u mailen naar: noolasproductions@gmail.com. \n</string>
+    <string name="share_projects">Project(en) delen</string>
+    <string name="spent_hours">Bestede uren:</string>
+    <string name="selected_shareselect">geselecteerd</string>
 
 </resources>

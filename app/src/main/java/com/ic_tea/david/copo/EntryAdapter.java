@@ -5,23 +5,27 @@
 package com.ic_tea.david.copo;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.ic_tea.david.copo.objects.ActionLog;
 
 import java.util.ArrayList;
+import java.util.zip.Inflater;
 
 public class EntryAdapter extends BaseAdapter {
     private SparseBooleanArray selectedIds;
     private Context context;
-    ArrayList<ActionLog> objects;
-    DBHelper dbHelper;
+    private ArrayList<ActionLog> objects;
+    private DBHelper dbHelper;
+    LayoutInflater inflater;
 
 
     /**
@@ -37,6 +41,7 @@ public class EntryAdapter extends BaseAdapter {
 
     private static class ViewHolder {
         TextView title, project, date, dole; // dole -> date of last edit
+        LinearLayout ll;
     }
 
     @Override
@@ -58,15 +63,21 @@ public class EntryAdapter extends BaseAdapter {
         final ViewHolder holder;
         if (convertView == null) {
             holder = new ViewHolder();
-            convertView = LayoutInflater.from(context).inflate(R.layout.display_entry_list_item, parent);
+            convertView = LayoutInflater.from(context).inflate(R.layout.display_entry_list_item, parent, false);
             holder.title = (TextView) convertView.findViewById(R.id.deli_title_text_view);
             holder.project = (TextView) convertView.findViewById(R.id.deli_project_text_view);
             holder.date = (TextView) convertView.findViewById(R.id.deli_date_text_view);
             holder.dole = (TextView) convertView.findViewById(R.id.deli_dole_text_view);
+            holder.ll = (LinearLayout) convertView.findViewById(R.id.deli_bg);
 
             convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();
+        }
+        if (selectedIds.get(position)) {
+            holder.ll.setBackgroundColor(Color.rgb(200, 200, 200));
+        } else {
+            holder.ll.setBackgroundColor(Color.WHITE);
         }
 
         ActionLog item = objects.get(position);
@@ -79,8 +90,8 @@ public class EntryAdapter extends BaseAdapter {
 
         // Format date from 'DDMMYYYYHHMM' to 'HH:MM DD-MM-YYYY'
         String dole = item.DOLE.substring(8, 10) + ":" + item.DOLE.substring(10) + " " +
-                item.DOLE.substring(6, 8) + "-" + item.DOLE.substring(4, 6) + "-" +
-                item.DOLE.substring(0, 4);
+                item.DOLE.substring(0, 2) + "-" + item.DOLE.substring(2, 4) + "-" +
+                item.DOLE.substring(4, 8);
         holder.dole.setText(dole);
         return convertView;
     }

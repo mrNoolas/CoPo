@@ -85,6 +85,7 @@
 
             <!-- Competence spinner -->
             <LinearLayout
+                android:id="@+id/aee_competence_spinner_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="4dp"
@@ -146,8 +147,9 @@
                         android:ems="3"
                         android:lines="1"
                         android:hint="X"
-                        android:digits="true"
-                        />
+                        android:digits="1234567890.,"
+                        android:maxLength="3"
+                        android:inputType="numberDecimal" />
                 </LinearLayout>
 
                 <android.support.design.widget.TextInputLayout
@@ -158,7 +160,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="start|top"
-                        android:hint="@string/description" />
+                        android:hint="@string/what_happened" />
                 </android.support.design.widget.TextInputLayout>
                 <android.support.design.widget.TextInputLayout
                     android:layout_width="match_parent"

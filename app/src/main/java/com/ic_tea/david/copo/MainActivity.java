@@ -6,7 +6,10 @@ package com.ic_tea.david.copo;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.Display;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -18,20 +21,20 @@ import android.widget.Toast;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
-    public static final String INTENT_TYPE_EXTRA = "com.ic_tea.david.copo.TYPE";
     String[] competences;
     ListView listView;
     TextView textView;
+    DBHelper dbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        DBHelper dbHelper = DBHelper.getInstance(this);
+        dbHelper = DBHelper.getInstance(this);
 
         setContentView(R.layout.activity_main);
         textView = (TextView) findViewById(R.id.am_points_counter);
-        textView.setText(Integer.toString(dbHelper.getPoints(2)));
+        textView.setText(Integer.toString(dbHelper.getPoints(3)));
 
         /*listView = (ListView) findViewById(R.id.am_main_list_view);
         // Set up categories in listView:
@@ -62,21 +65,34 @@ public class MainActivity extends AppCompatActivity {
 
     public void startCategory(View view) {
         Intent intent;
-
         int id = view.getId();
-        // ADD: specifications to intents, to properly handle the start of a new class
+
+        Log.i("main", Integer.toString(dbHelper.getMultipleProjects(0).size()) + " hi");
+
         if (id == R.id.am_projects) {
-            intent = new Intent(this, DisplayEntries.class);
-            intent.putExtra(INTENT_TYPE_EXTRA, 2);
+            intent = new Intent(this, DisplayProjects.class);
             startActivity(intent);
-        } else if (id == R.id.am_logs) {
-            intent = new Intent(this, DisplayEntries.class);
-            intent.putExtra(INTENT_TYPE_EXTRA, 0);
-            startActivity(intent);
-        } else if (id == R.id.am_portfolio) {
-            intent = new Intent(this, DisplayEntries.class);
-            intent.putExtra(INTENT_TYPE_EXTRA, 1);
-            startActivity(intent);
+        } else if (dbHelper.getMultipleProjects(0).size() == 0) {
+            AlertDialog a = new AlertDialog.Builder(this)
+                    .setTitle("Geen projecten")
+                    .setMessage("Er zijn nog geen projecten aangemaakt...\nZonder projecten kun je" +
+                            " niet beginnen aan je logboek of portfolio. Begin dus met het aanmaken" +
+                            " van een project.")
+                    .setPositiveButton("Geen probleem!", null)
+                    .setNegativeButton("He, wat vervelend :(", null)
+                    .create();
+            a.show();
+
+        } else {
+            if (id == R.id.am_logs) {
+                intent = new Intent(this, DisplayEntries.class);
+                intent.putExtra(DisplayEntries.INTENT_TYPE_EXTRA, 0);
+                startActivity(intent);
+            } else if (id == R.id.am_portfolio) {
+                intent = new Intent(this, DisplayEntries.class);
+                intent.putExtra(DisplayEntries.INTENT_TYPE_EXTRA, 1);
+                startActivity(intent);
+            }
         }
 
     }

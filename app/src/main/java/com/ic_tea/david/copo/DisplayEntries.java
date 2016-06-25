@@ -8,6 +8,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.ActionMode;
 import android.view.Menu;
@@ -28,6 +30,7 @@ public class DisplayEntries extends AppCompatActivity {
     public static final String INTENT_TYPE_EXTRA = "com.ic_tea.david.copo.TYPEFOREDIT";
     public static final String INTENT_ENTRY_ID_EXTRA = "com.ic_tea.david.copo.ENTRY";
     public static final int INTENT_REQUEST_EDIT = 1;
+    public static final String INTENT_PROJECT_ID_EXTRA = "com.ic_tea.david.copo.PROJECTID";
     private final String TAG = DisplayEntries.class.getSimpleName();
 
     ListView listView;
@@ -36,31 +39,35 @@ public class DisplayEntries extends AppCompatActivity {
     ArrayList<PortfolioItem> portfolioItems = new ArrayList<>();
     DBHelper dbHelper;
     String typeStr;
-    private int type;
+    private int type, projectId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        dbHelper = DBHelper.getInstance(this); // this may be laggy
 
-        type = getIntent().getIntExtra(MainActivity.INTENT_TYPE_EXTRA, 0);
-        switch (type) {
-            case 0:
-                typeStr = "Logboek";
-                break;
-            case 1:
-                typeStr = "Portfolio";
-                break;
-            default:
-                typeStr = "Lijst";
-                break;
+        projectId = getIntent().getIntExtra(INTENT_PROJECT_ID_EXTRA, 0);
+        type = getIntent().getIntExtra(INTENT_TYPE_EXTRA, 0);
+
+        if (projectId > 0) {
+            if (type == 0) {
+                setTitle(getString(R.string.log) + " - " + dbHelper.getProject(projectId).title);
+            } else if (type == 1) {
+                setTitle(getString(R.string.portfolio) + " - " +  dbHelper.getProject(projectId).title);
+            }
+        } else {
+            if (type == 0) {
+                setTitle(getString(R.string.log));
+            } else if (type == 1) {
+                setTitle(getString(R.string.portfolio));
+            }
         }
-        setTitle(typeStr);
 
         setContentView(R.layout.activity_display_entries);
         //Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         //setSupportActionBar(toolbar);
 
-        dbHelper = DBHelper.getInstance(this); // this may be laggy
+
         instructions = (TextView) findViewById(R.id.instructions);
         refreshListView();
 
@@ -77,17 +84,17 @@ public class DisplayEntries extends AppCompatActivity {
     private void refreshListView() {
         switch (type) {
             case 0: // Logs
-                entries = dbHelper.getMultipleLogs(0);
+                entries = dbHelper.getMultipleLogs(projectId);
                 if (entries.size() > 0) {
                     instructions.setVisibility(View.GONE);
                 } else {
                     instructions.setVisibility(View.VISIBLE);
                 }
-                setupListView(entries);
+                setupListView();
                 break;
 
             case 1: // Portfolio
-                portfolioItems = dbHelper.getMultiplePortfolioEntries(0);
+                portfolioItems = dbHelper.getMultiplePortfolioEntries(projectId);
                 entries = new ArrayList<>(); // reset in case of earlier use. This is for following conditional statement
 
                 if (portfolioItems.size() > 0) {
@@ -99,11 +106,11 @@ public class DisplayEntries extends AppCompatActivity {
                     instructions.setVisibility(View.VISIBLE);
                 }
 
-                setupListView(entries);
+                setupListView();
                 break;
 
             default: // Show empty listview and instructions
-                setupListView(new ArrayList<ActionLog>());
+                setupListView();
                 instructions.setVisibility(View.VISIBLE);
                 break;
         }
@@ -121,9 +128,9 @@ public class DisplayEntries extends AppCompatActivity {
         }
     }
 
-    private void setupListView (ArrayList<ActionLog> items) {
+    private void setupListView () {
         listView = (ListView) findViewById(R.id.entries_list_view);
-        final EntryAdapter entryAdapter = new EntryAdapter(this, items);
+        final EntryAdapter entryAdapter = new EntryAdapter(this, entries);
         listView.setAdapter(entryAdapter);
         listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
 
@@ -163,13 +170,17 @@ public class DisplayEntries extends AppCompatActivity {
                             if (selected.valueAt(i)) {
                                 int key = selected.keyAt(i);
 
+                                // remove from db
+                                if (type == 0) {
+                                    dbHelper.deleteLog(entries.get(key));
+                                } else if (type == 1) {
+                                    dbHelper.deletePortfolioItem(portfolioItems.get(key));
+                                    portfolioItems.remove(key);
+                                }
                                 // remove from adapter
                                 ActionLog selectedItem = entryAdapter.getItem(key);
                                 entryAdapter.remove(selectedItem);
-
-                                // remove from db
-                                //dbHelper.deleteEntry(entries.get(key));
-                                entries.remove(key);
+                                // entries.remove(key);
                             }
                         }
 
@@ -225,20 +236,18 @@ public class DisplayEntries extends AppCompatActivity {
     }
 
     private void startShareIntent(ArrayList<ActionLog> sharableEntries, Boolean isLog) {
-        // if no sharable entries were found
-        if (!ActionLog.share(this, sharableEntries)) {
-            String noEntriesMessage = getString(R.string.no_sharable_entries_message);
-            Toast toast = Toast.makeText(this, noEntriesMessage, Toast.LENGTH_SHORT);
-            toast.show();
+        ShareMessage message = new ShareMessage(this, dbHelper);
+        for (ActionLog log : sharableEntries) {
+            message.addLog(log);
         }
+        if(!message.send())message.showNoContentDialog();
     }
     private void startShareIntent(ArrayList<PortfolioItem> sharableEntries) {
-        // if no sharable entries were found
-        if (!PortfolioItem.sharePortfolio(this, sharableEntries)) {
-            String noEntriesMessage = getString(R.string.no_sharable_entries_message);
-            Toast toast = Toast.makeText(this, noEntriesMessage, Toast.LENGTH_SHORT);
-            toast.show();
+        ShareMessage message = new ShareMessage(this, dbHelper);
+        for (PortfolioItem p : sharableEntries) {
+            message.addPortfolioItem(p);
         }
+        if(!message.send())message.showNoContentDialog();
     }
 
     private void startEditEntryActivity() { startEditEntryActivity(-1); }
@@ -246,6 +255,7 @@ public class DisplayEntries extends AppCompatActivity {
         Intent intent = new Intent(this, EditEntry.class);
         intent.putExtra(INTENT_TYPE_EXTRA, type);
         intent.putExtra(INTENT_ENTRY_ID_EXTRA, id);
+        intent.putExtra(INTENT_PROJECT_ID_EXTRA, projectId);
         startActivityForResult(intent, INTENT_REQUEST_EDIT);
     }
 }

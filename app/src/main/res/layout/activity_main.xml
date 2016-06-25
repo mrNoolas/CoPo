@@ -7,7 +7,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="32dp">
+    android:padding="32dp"
+    android:background="@drawable/klimmuurmal">
     <Button
         android:id="@+id/am_projects"
         android:layout_width="match_parent"
@@ -46,6 +47,6 @@
         android:layout_centerHorizontal="true"
         android:gravity="center_horizontal"
         android:textSize="100sp"
-        android:textColor="@color/colorPrimaryDark"
-        android:text="XX"/>
+        android:textColor="@color/colorPrimary"
+        android:hint="XX" />
 </RelativeLayout>

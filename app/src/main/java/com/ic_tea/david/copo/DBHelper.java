@@ -25,7 +25,7 @@ public class DBHelper extends SQLiteOpenHelper{
     private static final String TAG = DBHelper.class.getSimpleName();
     // Database info
     private static final String DATABASE_NAME = "CoPoDatabaseOfAwesomeness";
-    private static final int DATABASE_VERSION = 8;
+    private static final int DATABASE_VERSION = 18;
 
     // table names
     private static final String TABLE_LEVELS = "levels"; // this table has all the possible user levels
@@ -156,7 +156,7 @@ public class DBHelper extends SQLiteOpenHelper{
                 KEY_LOG_DATE_OF_LAST_EDIT + " TEXT," + // DDMMYYYYHHMM
                 KEY_LOG_TITLE + " TEXT," +
                 KEY_LOG_DATE_OF_ACTION + " TEXT," + // DDMMYYYY
-                KEY_LOG_HOURS_SPENT + " INTEGER," +
+                KEY_LOG_HOURS_SPENT + " REAL," +
                 KEY_LOG_DESCR + " TEXT," +
                 KEY_LOG_ACHIEVEMENTS + " TEXT," +
 
@@ -172,7 +172,7 @@ public class DBHelper extends SQLiteOpenHelper{
                 KEY_PORTFOLIO_DATE_Of_LAST_EDIT + " TEXT," + // DDMMYYYYHHMM
                 KEY_PORTFOLIO_TITLE + " TEXT," +
                 KEY_PORTFOLIO_DATE_OF_ACTION + " TEXT," + // DDMMYYYY
-                KEY_LOG_HOURS_SPENT + " INTEGER," +
+                KEY_LOG_HOURS_SPENT + " REAL," +
                 KEY_PORTFOLIO_DESCR + " TEXT," +
                 KEY_PORTFOLIO_ACHIEVEMENTS + " TEXT," +
                 KEY_PORTFOLIO_LESSON_LEARNED + " TEXT," +
@@ -217,6 +217,9 @@ public class DBHelper extends SQLiteOpenHelper{
         addOrUpdateCompetence(new Competence("Zelfbeeld"), db);
         addOrUpdateCompetence(new Competence("Houding"), db);
         addOrUpdateCompetence(new Competence("Vaardigheden"), db);
+
+        // Dummy project
+        addOrUpdateProject(new Project("Test project", "Dit is een test-project"), db);
     }
 
     @Override
@@ -224,12 +227,13 @@ public class DBHelper extends SQLiteOpenHelper{
         // TODO: when the database is updated, update table instead of recreating it...
         if (oldVersion != newVersion) {
             // Simplest implementation is to drop all old tables and recreate them
-            db.execSQL("DROP TABLE IF EXISTS " + TABLE_LEVELS);
-            db.execSQL("DROP TABLE IF EXISTS " + TABLE_COMPETENCES);
-            db.execSQL("DROP TABLE IF EXISTS " + TABLE_PROJECTS);
+            // delete from bottom to top
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_LOGS);
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_PORTFOLIOS);
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_GOALS);
+            db.execSQL("DROP TABLE IF EXISTS " + TABLE_PROJECTS);
+            db.execSQL("DROP TABLE IF EXISTS " + TABLE_COMPETENCES);
+            db.execSQL("DROP TABLE IF EXISTS " + TABLE_LEVELS);
 
             onCreate(db);
         }
@@ -391,7 +395,9 @@ public class DBHelper extends SQLiteOpenHelper{
     public void addOrUpdateProject (Project project) {
         // Open db
         SQLiteDatabase db = getWritableDatabase();
-
+        addOrUpdateProject(project, db);
+    }
+    public void addOrUpdateProject (Project project, SQLiteDatabase db) {
         db.beginTransaction();
         try {
             ContentValues values = new ContentValues();
@@ -445,13 +451,13 @@ public class DBHelper extends SQLiteOpenHelper{
         }
         return null;
     }
-    public void deleteProject (Project project) {
+    public void deleteProject (int projectId) {
         SQLiteDatabase db = getWritableDatabase();
 
         db.beginTransaction();
         try {
             db.delete(TABLE_PROJECTS, KEY_PROJECT_ID + "= ?",
-                    new String[]{Integer.toString(project.id)});
+                    new String[]{Integer.toString(projectId)});
             db.setTransactionSuccessful();
         } catch (Exception e) {
             Log.e(TAG, "Error while trying to delete project from db");
@@ -460,6 +466,10 @@ public class DBHelper extends SQLiteOpenHelper{
         }
     }
     public ArrayList<Project> getMultipleProjects(int type) {
+        SQLiteDatabase db = getReadableDatabase();
+        return getMultipleProjects(type, db);
+    }
+    public ArrayList<Project> getMultipleProjects(int type, SQLiteDatabase db) {
         ArrayList<Project> projects = new ArrayList<>();
         String PROJECT_SELECT_QUERY;
 
@@ -470,7 +480,7 @@ public class DBHelper extends SQLiteOpenHelper{
                     String.format("SELECT * FROM %s WHERE %s = '%s'", TABLE_PROJECTS, KEY_PROJECT_ID, type);
         }
 
-        SQLiteDatabase db = getReadableDatabase();
+
         Cursor cursor = db.rawQuery(PROJECT_SELECT_QUERY, null);
         try {
             if (cursor.moveToFirst()) {
@@ -491,6 +501,38 @@ public class DBHelper extends SQLiteOpenHelper{
         }
         return projects;
     }
+    public double getHoursSpentOnProject(int id) {
+        SQLiteDatabase db = getReadableDatabase();
+        return getHoursSpentOnProject(id, db);
+    }
+    public double getHoursSpentOnProject(int id, SQLiteDatabase db) {
+        double hoursSpent = 0;
+
+        // FIXME: possible double count of hours due to similarities between log- and portfolio-entries
+        // This is now (hopefully temporarily) fixed by only counting portfolio hours
+        String LOG_SELECT_QUERY;
+        if (id == 0) {
+            LOG_SELECT_QUERY = String.format("SELECT * FROM %s", TABLE_LOGS);
+        } else {
+            LOG_SELECT_QUERY = String.format("SELECT * FROM %s WHERE %s = '%s'",
+                    TABLE_LOGS, KEY_LOG_PROJECT_ID, id);
+        }
+        Cursor cursor = db.rawQuery(LOG_SELECT_QUERY, null);
+        try {
+            if (cursor.moveToFirst()) {
+                do {
+                    hoursSpent += cursor.getDouble(cursor.getColumnIndex(KEY_LOG_HOURS_SPENT));
+                } while (cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error while getting logs from db");
+        } finally {
+            if (cursor != null && !cursor.isClosed()){
+                cursor.close();
+            }
+        }
+        return hoursSpent;
+    }
 
     public void addOrUpdateLog (ActionLog log) {
         // Open db
@@ -500,9 +542,10 @@ public class DBHelper extends SQLiteOpenHelper{
         try {
             ContentValues values = new ContentValues();
             values.put(KEY_LOG_PROJECT_ID, log.projectId);
+            values.put(KEY_LOG_DATE_OF_LAST_EDIT, log.DOLE);
             values.put(KEY_LOG_TITLE, log.title);
             values.put(KEY_LOG_DATE_OF_ACTION, log.date);
-            values.put(KEY_LOG_DATE_OF_LAST_EDIT, log.DOLE);
+            values.put(KEY_LOG_HOURS_SPENT, log.hoursSpent);
             values.put(KEY_LOG_DESCR, log.descr);
             values.put(KEY_LOG_ACHIEVEMENTS, log.achievements);
 
@@ -553,7 +596,7 @@ public class DBHelper extends SQLiteOpenHelper{
                 String dateOfLastEdit = cursor.getString(cursor.getColumnIndex(KEY_LOG_DATE_OF_LAST_EDIT));
                 String title = cursor.getString(cursor.getColumnIndex(KEY_LOG_TITLE));
                 String dateOfAction = cursor.getString(cursor.getColumnIndex(KEY_LOG_DATE_OF_ACTION));
-                int hoursSpent = cursor.getInt(cursor.getColumnIndex(KEY_LOG_HOURS_SPENT));
+                double hoursSpent = cursor.getDouble(cursor.getColumnIndex(KEY_LOG_HOURS_SPENT));
                 String description = cursor.getString(cursor.getColumnIndex(KEY_LOG_DESCR));
                 String achievements = cursor.getString(cursor.getColumnIndex(KEY_LOG_ACHIEVEMENTS));
 
@@ -571,18 +614,23 @@ public class DBHelper extends SQLiteOpenHelper{
         }
         return null;
     }
-    public ArrayList<ActionLog> getMultipleLogs (int idKey) {
+    public ArrayList<ActionLog> getMultipleLogs (int projectKey) {
+        SQLiteDatabase db = getReadableDatabase();
+        return getMultipleLogs(projectKey, db);
+    }
+    public ArrayList<ActionLog> getMultipleLogs (int projectKey, SQLiteDatabase db) {
         ArrayList<ActionLog> logs = new ArrayList<>();
 
         String LOG_SELECT_QUERY;
-        if (idKey <= 0) {
+        if (projectKey <= 0) {
             LOG_SELECT_QUERY =
                     String.format("SELECT * FROM %s", TABLE_LOGS);
         } else {
             LOG_SELECT_QUERY =
-                    String.format("SELECT * FROM %s WHERE %s = '%s'", TABLE_LOGS, KEY_LOG_ID, idKey);
+                    String.format("SELECT * FROM %s WHERE %s = '%s'",
+                            TABLE_LOGS, KEY_LOG_PROJECT_ID, projectKey);
         }
-        SQLiteDatabase db = getReadableDatabase();
+
         Cursor cursor = db.rawQuery(LOG_SELECT_QUERY, null);
         try {
             if (cursor.moveToFirst()) {
@@ -592,7 +640,7 @@ public class DBHelper extends SQLiteOpenHelper{
                     String dateOfLastEdit = cursor.getString(cursor.getColumnIndex(KEY_LOG_DATE_OF_LAST_EDIT));
                     String title = cursor.getString(cursor.getColumnIndex(KEY_LOG_TITLE));
                     String dateOfAction = cursor.getString(cursor.getColumnIndex(KEY_LOG_DATE_OF_ACTION));
-                    int hoursSpent = cursor.getInt(cursor.getColumnIndex(KEY_LOG_HOURS_SPENT));
+                    double hoursSpent = cursor.getDouble(cursor.getColumnIndex(KEY_LOG_HOURS_SPENT));
                     String description = cursor.getString(cursor.getColumnIndex(KEY_LOG_DESCR));
                     String achievements = cursor.getString(cursor.getColumnIndex(KEY_LOG_ACHIEVEMENTS));
 
@@ -619,11 +667,13 @@ public class DBHelper extends SQLiteOpenHelper{
             ContentValues values = new ContentValues();
             values.put(KEY_PORTFOLIO_PROJECT_ID, pItem.projectId);
             values.put(KEY_PORTFOLIO_COMPETENCE_ID, pItem.competenceId);
+            values.put(KEY_PORTFOLIO_DATE_Of_LAST_EDIT, pItem.DOLE);
             values.put(KEY_PORTFOLIO_TITLE, pItem.title);
             values.put(KEY_PORTFOLIO_DATE_OF_ACTION, pItem.date);
-            values.put(KEY_PORTFOLIO_DATE_Of_LAST_EDIT, pItem.DOLE);
+            values.put(KEY_PORTFOLIO_HOURS_SPENT, pItem.hoursSpent);
             values.put(KEY_PORTFOLIO_DESCR, pItem.descr);
             values.put(KEY_PORTFOLIO_ACHIEVEMENTS, pItem.achievements);
+            values.put(KEY_PORTFOLIO_LESSON_LEARNED, pItem.lessonLearned);
             values.put(KEY_PORTFOLIO_NEXT_TIME, pItem.nextTime);
 
             // First try to update the entry
@@ -677,7 +727,7 @@ public class DBHelper extends SQLiteOpenHelper{
                 String dateOfLastEdit = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_DATE_Of_LAST_EDIT));
                 String title = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_TITLE));
                 String date = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_DATE_OF_ACTION));
-                int hoursSpent = cursor.getInt(cursor.getColumnIndex(KEY_PORTFOLIO_HOURS_SPENT));
+                double hoursSpent = cursor.getDouble(cursor.getColumnIndex(KEY_PORTFOLIO_HOURS_SPENT));
                 String description = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_DESCR));
                 String achievements = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_ACHIEVEMENTS));
                 String lessonLearned = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_LESSON_LEARNED));
@@ -697,17 +747,20 @@ public class DBHelper extends SQLiteOpenHelper{
         }
         return null;
     }
-    public ArrayList<PortfolioItem> getMultiplePortfolioEntries (int type) {
-        ArrayList<PortfolioItem> portfolioItems = new ArrayList<>();
+    public ArrayList<PortfolioItem> getMultiplePortfolioEntries (int projectId) {
         SQLiteDatabase db = getReadableDatabase();
+        return getMultiplePortfolioEntries(projectId, db);
+    }
+    public ArrayList<PortfolioItem> getMultiplePortfolioEntries (int projectId, SQLiteDatabase db) {
+        ArrayList<PortfolioItem> portfolioItems = new ArrayList<>();
 
         String PORTFOLIOS_SELECT_QUERY;
-        if (type == 0) {
+        if (projectId == 0) {
             PORTFOLIOS_SELECT_QUERY =
                     String.format("SELECT * FROM %s", TABLE_PORTFOLIOS);
         } else {
             PORTFOLIOS_SELECT_QUERY =
-                    String.format("SELECT * FROM %s WHERE %s = '%s'", TABLE_PORTFOLIOS, KEY_PORTFOLIO_ID, type);
+                    String.format("SELECT * FROM %s WHERE %s = '%s'", TABLE_PORTFOLIOS, KEY_PORTFOLIO_PROJECT_ID, projectId);
         }
 
         Cursor cursor = db.rawQuery(PORTFOLIOS_SELECT_QUERY, null);
@@ -716,18 +769,18 @@ public class DBHelper extends SQLiteOpenHelper{
                 do {
                     // This is not a efficient way of querrying (use predetermined index) but the db is small so, not huge deal...
                     int id = cursor.getInt(cursor.getColumnIndex(KEY_PORTFOLIO_ID));
-                    int projectId = cursor.getInt(cursor.getColumnIndex(KEY_PORTFOLIO_PROJECT_ID));
+                    int pId = cursor.getInt(cursor.getColumnIndex(KEY_PORTFOLIO_PROJECT_ID));
                     int competenceId = cursor.getInt(cursor.getColumnIndex(KEY_PORTFOLIO_COMPETENCE_ID));
                     String dateOfLastEdit = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_DATE_Of_LAST_EDIT));
                     String title = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_TITLE));
                     String date = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_DATE_OF_ACTION));
-                    int hoursSpent = cursor.getInt(cursor.getColumnIndex(KEY_PORTFOLIO_HOURS_SPENT));
+                    double hoursSpent = cursor.getDouble(cursor.getColumnIndex(KEY_PORTFOLIO_HOURS_SPENT));
                     String description = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_DESCR));
                     String achievements = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_ACHIEVEMENTS));
                     String lessonLearned = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_LESSON_LEARNED));
                     String nextTime = cursor.getString(cursor.getColumnIndex(KEY_PORTFOLIO_NEXT_TIME));
 
-                    portfolioItems.add(new PortfolioItem(id, projectId, competenceId,  dateOfLastEdit,
+                    portfolioItems.add(new PortfolioItem(id, pId, competenceId,  dateOfLastEdit,
                             title, date, hoursSpent, description, achievements, lessonLearned, nextTime));
                 } while (cursor.moveToNext());
             }
@@ -860,8 +913,9 @@ public class DBHelper extends SQLiteOpenHelper{
 
     public int getPoints(int type) {
         int points = 0;
-        int logWeight = 1;
-        int portfolioWeight = 2;
+        int logWeight = 10;
+        int portfolioWeight = 15;
+        int hourWeight = 1;
 
         switch (type) {
             case 0: // only logs
@@ -870,14 +924,20 @@ public class DBHelper extends SQLiteOpenHelper{
             case 1: // only portfolio's
                 points += getMultiplePortfolioEntries(0).size() * portfolioWeight;
                 break;
-            case 2:
+            case 2: // portfolios and logs
                 points += getMultiplePortfolioEntries(0).size() * portfolioWeight;
                 points += getMultipleLogs(0).size() * logWeight;
+                break;
+            case 3: // portfolios, logs and hours
+                points += getMultiplePortfolioEntries(0).size() * portfolioWeight;
+                points += getMultipleLogs(0).size() * logWeight;
+                points += getHoursSpentOnProject(0) * hourWeight; // all hours spent
                 break;
             default:
                 points = -1;
                 break;
         }
+
         return points;
     }
 
