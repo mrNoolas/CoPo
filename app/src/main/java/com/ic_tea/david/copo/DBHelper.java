@@ -25,7 +25,7 @@ public class DBHelper extends SQLiteOpenHelper{
     private static final String TAG = DBHelper.class.getSimpleName();
     // Database info
     private static final String DATABASE_NAME = "CoPoDatabaseOfAwesomeness";
-    private static final int DATABASE_VERSION = 18;
+    private static final int DATABASE_VERSION = 19;
 
     // table names
     private static final String TABLE_LEVELS = "levels"; // this table has all the possible user levels
@@ -57,7 +57,6 @@ public class DBHelper extends SQLiteOpenHelper{
     private static final String KEY_PROJECT_TITLE = "title";
     private static final String KEY_PROJECT_DESCR = "description";
 
-    // ADD: column which records the amount of time spent on a certain action
     // logs columns
     private static final String KEY_LOG_ID = "logId";
     private static final String KEY_LOG_PROJECT_ID = "projectId"; // foreign key
@@ -204,8 +203,6 @@ public class DBHelper extends SQLiteOpenHelper{
     }
 
     private void addAllDefaults(SQLiteDatabase db) {
-        // ADD: Defaults
-
         // Levels
         // CHANGE: description of the levels
         addOrUpdateLevel(new EduLevel("Basis", "Het eerst te behalen niveau voor nieuwe leerlingen, die weinig ervaring hebben met projectmatig"), db);
@@ -239,7 +236,6 @@ public class DBHelper extends SQLiteOpenHelper{
         }
     }
 
-    // ADD: all the interaction functions for the tables
     public void addOrUpdateLevel(EduLevel level) {
         SQLiteDatabase db = getWritableDatabase();
         addOrUpdateLevel(level, db);

@@ -88,8 +88,6 @@ public class EditEntry extends AppCompatActivity implements DatePickerDialog.OnD
         prepareProjectSpinner();
         prepareDateSetButton();
 
-        // ADD: no projects handler
-
         if (type == 0) { // Log
             // hide the things that are not used for a log
             findViewById(R.id.aee_competence_spinner_layout).setVisibility(View.GONE);
